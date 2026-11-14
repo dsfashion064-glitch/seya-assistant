@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>የኔ ረዳት</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#4f46d8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="/icon/192.png">
+<link rel="apple-touch-icon" href="/icon/192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f1f3f7;--surface:#ffffff;--ink:#141821;--muted:#586173;--line:#dce0e8;
+  --accent:#4f46d8;--accent-ink:#ffffff;--done:#12805a;--soft:#e9e8fb;
+  color-scheme:light;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c0f16;--surface:#151a25;--ink:#e9ecf3;--muted:#8d97a8;--line:#252c3a;
+    --accent:#8c82ff;--accent-ink:#0c0f16;--done:#3dd197;--soft:#232047;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c0f16;--surface:#151a25;--ink:#e9ecf3;--muted:#8d97a8;--line:#252c3a;
+  --accent:#8c82ff;--accent-ink:#0c0f16;--done:#3dd197;--soft:#232047;color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box;margin:0;padding:0}
+body{height:100%;background:var(--bg);color:var(--ink);font-family:'Noto Sans Ethiopic','Nyala','Abyssinica SIL','Segoe UI',system-ui,sans-serif;font-size:16px;line-height:1.6;overflow:hidden}
+button,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:300px 1fr;height:100%}
+
+/* Agent rail: the live pipeline */
+.rail{background:var(--surface);border-inline-end:1px solid var(--line);padding:24px 20px;display:flex;flex-direction:column;gap:20px;overflow-y:auto}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand h1{font-size:1.05rem;font-weight:700;line-height:1.3}
+.brand p{font-size:.8rem;color:var(--muted)}
+.icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:transparent;cursor:pointer;display:grid;place-items:center;flex:none}
+.icon-btn:hover{background:var(--bg)}
+.icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pipeline{list-style:none;position:relative;display:flex;flex-direction:column;gap:6px}
+.pipeline::before{content:"";position:absolute;inset-inline-start:21px;top:24px;bottom:24px;width:2px;background:var(--line)}
+.agent{position:relative;display:grid;grid-template-columns:44px 1fr;gap:12px;padding:10px;border-radius:14px;border:1px solid transparent;transition:background .25s,border-color .25s}
+.agent .dot{width:44px;height:44px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;font-size:1.2rem;position:relative;z-index:1;transition:border-color .25s,background .25s}
+.agent b{display:block;font-weight:700;line-height:1.35}
+.agent small{display:block;color:var(--muted);font-size:.82rem;line-height:1.4}
+.agent .note{margin-top:4px;font-size:.82rem;color:var(--muted);min-height:1.4em}
+.agent[data-state="active"]{background:var(--soft);border-color:var(--accent)}
+.agent[data-state="active"] .dot{border-color:var(--accent);animation:pulse 1.4s ease-in-out infinite}
+.agent[data-state="active"] .note{color:var(--ink)}
+.agent[data-state="done"] .dot{border-color:var(--done);background:var(--done)}
+.agent[data-state="done"] .note{color:var(--done)}
+@keyframes pulse{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 25%,transparent)}}
+
+/* Chat */
+.main{display:flex;flex-direction:column;min-width:0;height:100%}
+.chat{flex:1;overflow-y:auto;padding:28px clamp(16px,5vw,56px);display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
+.msg{max-width:min(46rem,86%);padding:12px 16px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.user{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-end-end-radius:4px}
+.msg.agent{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-end-start-radius:4px}
+.msg.error{border-color:#d1435b;color:#d1435b}
+.msg strong{font-weight:700}
+.empty{margin:auto;max-width:34rem;text-align:center}
+.empty h2{font-size:1.5rem;line-height:1.4;margin-bottom:6px}
+.empty p{color:var(--muted);margin-bottom:18px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;cursor:pointer;font-size:.9rem}
+.chip:hover{border-color:var(--accent)}
+
+.composer{padding:12px clamp(16px,5vw,56px) 16px;border-top:1px solid var(--line);background:var(--surface)}
+.box{display:flex;align-items:flex-end;gap:10px;max-width:56rem;margin:0 auto;border:1px solid var(--line);border-radius:16px;padding:8px 8px 8px 16px;background:var(--bg)}
+.box:focus-within{border-color:var(--accent)}
+textarea{flex:1;resize:none;border:0;background:transparent;outline:none;max-height:140px;padding:8px 0;line-height:1.5}
+textarea::placeholder{color:var(--muted)}
+.send{border:0;background:var(--accent);color:var(--accent-ink);border-radius:12px;padding:0 18px;height:44px;font-weight:700;cursor:pointer;flex:none}
+.send:disabled{opacity:.45;cursor:not-allowed}
+.hint{max-width:56rem;margin:6px auto 0;font-size:.78rem;color:var(--muted)}
+
+@media (max-width:820px){
+  .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .rail{border-inline-end:0;border-bottom:1px solid var(--line);padding:12px 14px;gap:10px;overflow:visible}
+  .brand p{display:none}
+  .pipeline{flex-direction:row;gap:6px}
+  .pipeline::before{display:none}
+  .agent{flex:1;grid-template-columns:1fr;gap:4px;padding:8px;text-align:center;justify-items:center;min-width:0}
+  .agent .dot{width:36px;height:36px;font-size:1rem}
+  .agent b{font-size:.82rem}
+  .agent small,.agent .note{display:none}
+  .msg{max-width:92%}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail" aria-label="ኤጀንቶች">
+    <div class="brand">
+      <div>
+        <h1 id="agentName">የኔ ረዳት</h1>
+        <p id="agentTag">ለጨዋታም ለስራም ዝግጁ</p>
+      </div>
+      <button class="icon-btn" id="themeBtn" aria-label="ገጽታ ቀይር" title="ገጽታ ቀይር">
+        <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+    <ol class="pipeline" id="pipeline"></ol>
+  </aside>
+
+  <main class="main">
+    <div class="chat" id="chat" aria-live="polite">
+      <div class="empty" id="empty">
+        <h2 id="hello">ሰላም! ምን ልርዳዎት?</h2>
+        <p>ጥያቄ፣ ስራ ወይም ጨዋታ፤ ማንኛውንም ይጻፉልኝ።</p>
+        <div class="chips" id="chips"></div>
+      </div>
+    </div>
+    <div class="composer">
+      <div class="box">
+        <textarea id="input" rows="1" placeholder="ስራ ወይም ጥያቄ ይጻፉ…" aria-label="መልዕክት"></textarea>
+        <button class="send" id="send">አዘዝ</button>
+      </div>
+      <p class="hint">Enter ይላኩ፤ Shift + Enter አዲስ መስመር ይጀምራል።</p>
+    </div>
+  </main>
+</div>
+
+<script>
+// ለእውነተኛ backend: የAPI አድራሻዎን እዚህ ያስገቡ (POST { prompt } → { reply }).
+// ባዶ ከሆነ ገጹ በሙከራ (demo) ሁነታ ይሰራል።
+const API_URL = '/api/chat';
+
+const AGENTS = [
+  {icon:'🧠', name:'እቅድ አውጪ', role:'ስራውን ይከፋፍላል',
+   notes:['ጥያቄውን እያነበበ ነው…'], done:'እቅድ ተዘጋጅቷል'},
+  {icon:'🔍', name:'ተንታኝ', role:'መረጃና አማራጮችን ያነጻጽራል',
+   notes:['እያሰበበት ነው…'], done:'ትንተና ተጠናቋል'},
+  {icon:'✍️', name:'ጸሐፊ', role:'የመጨረሻውን ምላሽ ያዘጋጃል',
+   notes:['ምላሽ እየጻፈ ነው…'], done:'ምላሽ ዝግጁ ነው'}
+];
+const SUGGESTIONS = [
+  'ሰላም! ዛሬ ምን አዲስ ነገር አለ?',
+  'አንድ ጥሩ ቀልድ ንገረኝ',
+  'ለአነስተኛ ንግድ የማስተዋወቂያ እቅድ አዘጋጅልኝ',
+  'ለስራ ማመልከቻ የሽፋን ደብዳቤ ጻፍልኝ'
+];
+
+const $ = id => document.getElementById(id);
+const chat = $('chat'), input = $('input'), sendBtn = $('send'), pipeline = $('pipeline');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let busy = false;
+
+/* ገጽታ */
+const root = document.documentElement;
+try { const t = localStorage.getItem('theme'); if (t) root.dataset.theme = t; } catch (e) {}
+$('themeBtn').onclick = () => {
+  const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem('theme', root.dataset.theme); } catch (e) {}
+};
+
+/* የኤጀንቶች ዝርዝር */
+AGENTS.forEach((a, i) => {
+  const li = document.createElement('li');
+  li.className = 'agent'; li.dataset.state = 'idle'; li.id = 'agent' + i;
+  li.innerHTML = '<div class="dot">' + a.icon + '</div><div><b>' + a.name + '</b><small>' + a.role + '</small><div class="note"></div></div>';
+  pipeline.appendChild(li);
+});
+function setAgent(i, state, note) {
+  const el = $('agent' + i);
+  el.dataset.state = state;
+  el.querySelector('.note').textContent = note || '';
+}
+const resetAgents = () => AGENTS.forEach((_, i) => setAgent(i, 'idle', ''));
+
+/* ጥቆማዎች */
+SUGGESTIONS.forEach(s => {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.textContent = s;
+  b.onclick = () => { input.value = s; autosize(); input.focus(); };
+  $('chips').appendChild(b);
+});
+
+/* መልዕክቶች */
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+const format = s => escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+function addMessage(text, cls) {
+  const e = $('empty'); if (e) e.remove();
+  const m = document.createElement('div');
+  m.className = 'msg ' + cls;
+  m.innerHTML = format(text);
+  chat.appendChild(m);
+  chat.scrollTop = chat.scrollHeight;
+  return m;
+}
+async function typeInto(el, text) {
+  if (reduceMotion) { el.innerHTML = format(text); return; }
+  const step = Math.max(1, Math.ceil(text.length / 50));
+  for (let i = 0; i < text.length; i += step) {
+    el.textContent = text.slice(0, i + step);
+    chat.scrollTop = chat.scrollHeight;
+    await sleep(12);
+  }
+  el.innerHTML = format(text);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+/* ምላሽ ማምጣት */
+const vid = () => { try { let v = localStorage.getItem('vid'); if (!v) { v = Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem('vid', v); } return v; } catch (e) { return ''; } };
+const history = [];
+async function fetchReply(q) {
+  const r = await fetch(API_URL, {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({prompt: q, history: history.slice(-12), vid: vid()})
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+  return data.reply || 'ባዶ ምላሽ ተመልሷል።';
+}
+
+async function run() {
+  const q = input.value.trim();
+  if (!q || busy) return;
+  busy = true; sendBtn.disabled = true;
+  input.value = ''; autosize();
+  addMessage(q, 'user');
+  resetAgents();
+  let finished = false;
+  const replyPromise = fetchReply(q)
+    .then(v => ({ok: true, v}), e => ({ok: false, e}))
+    .then(x => { finished = true; return x; });
+  for (let i = 0; i < AGENTS.length && !finished; i++) {
+    setAgent(i, 'active', AGENTS[i].notes[0]);
+    await Promise.race([sleep(reduceMotion ? 100 : 400), replyPromise]);
+    if (!finished && i < AGENTS.length - 1) setAgent(i, 'done', AGENTS[i].done);
+  }
+  const res = await replyPromise;
+  AGENTS.forEach((a, i) => setAgent(i, res.ok ? 'done' : 'idle', res.ok ? a.done : ''));
+  if (res.ok) {
+    history.push({role: 'user', text: q}, {role: 'model', text: res.v});
+    const m = addMessage('', 'agent');
+    await typeInto(m, res.v);
+  } else {
+    addMessage('**ስህተት፦** ' + (res.e && res.e.message ? res.e.message : 'ምላሽ ማምጣት አልተቻለም።'), 'agent error');
+  }
+  busy = false; sendBtn.disabled = false; input.focus();
+}
+
+function autosize() { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 140) + 'px'; }
+input.addEventListener('input', autosize);
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); run(); }
+});
+sendBtn.onclick = run;
+fetch('/api/info').then(r => r.json()).then(d => {
+  if (d.name) {
+    $('agentName').textContent = d.name;
+    document.title = d.name;
+    $('hello').textContent = 'ሰላም! እኔ ' + d.name + ' ነኝ።';
+  }
+  if (d.tagline) $('agentTag').textContent = d.tagline;
+}).catch(() => {});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+</body>
+</html>
