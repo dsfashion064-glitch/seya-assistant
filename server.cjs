@@ -1,58 +1,97 @@
 require('dotenv').config();
 const express = require('express');
 const zlib = require('zlib');
+const fs = require('fs');
 const app = express();
 app.use(express.json({ limit: '50kb' }));
+
 const e = process.env;
-const OWNER = e.OWNER_NAME || '';
-const NAME = e.AGENT_NAME || (OWNER ? OWNER + ' ረዳት' : 'የኔ ረዳት');
-const fs = require('fs');
-let F = {};
-try { F = require('dotenv').parse(fs.readFileSync('.env')); } catch (x) {}
-let RULES = F.IMPORTANT_RULES || '';
-try { RULES += '\n' + fs.readFileSync('.env', 'utf8').split('\n').filter(l => /^\s*\d+\.\s/.test(l)).join('\n'); } catch (x) {}
-RULES = RULES.trim();
+const OWNER = e.OWNER_NAME || 'SEYA DESIGN';
+const NAME = e.AGENT_NAME || 'የSEYA DESIGN ረዳት';
+const TAGLINE = e.AGENT_TAGLINE || 'WEAR CONFIDENCE ✨ | ዘመናዊ የሴቶች ፋሽን ዲዛይንና ስፌት';
+
+const ABOUT_OWNER = e.ABOUT_OWNER || 'SEYA DESIGN በጅማ መርካቶ የሚገኝ የሴቶች ፋሽን ዲዛይንና ስፌት ቤት ነው። በዘመናዊ ዲዛይን፣ ጥራት ያለው ስፌትና ፍጹም የሰውነት ልክ ላይ ያተኩራል።';
+const BUSINESS_TYPE = e.BUSINESS_TYPE || 'የሴቶች ፋሽን ዲዛይንና ስፌት';
+const SERVICES = e.SERVICES || 'የሴቶች ቀሚስ ዲዛይን፣ የተለያዩ የፋሽን ልብሶች ስፌት፣ Custom Made፣ የደንበኛ ፍላጎት መሰረት ዲዛይንና ስፌት።';
+const LOCATION = e.LOCATION || 'ኢትዮጵያ፣ ኦሮሚያ፣ ጅማ ከተማ፣ መርካቶ፣ Nib Bank አጠገብ፣ የሱቅ ቁጥር 35';
+const PHONE_NUMBER = e.PHONE_NUMBER || '0948964203';
+const TIKTOK = e.TIKTOK || '@seyadesign.et';
+const EMAIL = e.EMAIL || 'Seyadesign99@gmail.com';
+const AGENT_ROLE = e.AGENT_ROLE || 'የSEYA DESIGN ደንበኞችን በትህትናና በሙያዊነት መቀበል፣ ስለ አገልግሎቶች፣ ዋጋዎች፣ የስራ ሰዓትና የሱቅ አድራሻ መረጃ መስጠት።';
+const LANGUAGE = e.LANGUAGE || 'በዋናነት በአማርኛ መመለስ። ደንበኛው እንግሊዝኛ ከተጠቀመ በእንግሊዝኛ መመለስ።';
+const PERSONALITY = e.PERSONALITY || 'ተግባቢ፣ ትሁት፣ ፈጣን፣ ትዕግስተኛና ፕሮፌሽናል።';
+const BRAND_SLOGAN = e.BRAND_SLOGAN || 'WEAR CONFIDENCE ✨';
+
+const DEFAULT_RULES = `1. ሁልጊዜ ደንበኞችን በአክብሮት መመለስ።
+2. የማይታወቅ ዋጋ ወይም የስራ ሰዓት በግምት አለመናገር።
+3. ዋጋው እንደ ዲዛይኑ፣ ጨርቁና የስፌት ውስብስብነት እንደሚለያይ ማስረዳት።
+4. የደንበኛውን ፍላጎት ማዳመጥና አስፈላጊ ጥያቄዎችን ብቻ መጠየቅ።
+5. ትዕዛዝ ወይም ክፍያ ተፈጽሟል ብሎ ያልተረጋገጠ መረጃ አለመናገር።
+6. ከባድ ጥያቄ ከሆነ ደንበኛውን ከሱቁ ባለቤት (ስልክ 0948964203) ጋር ማገናኘት።
+7. የሌላ ሱቅ መረጃ አለመስጠት።`;
+
+const RULES = e.IMPORTANT_RULES || DEFAULT_RULES;
+
 const ABOUT = [
-  e.ABOUT_OWNER,
-  e.BUSINESS_TYPE && 'Business type: ' + e.BUSINESS_TYPE,
-  e.SERVICES && 'Services: ' + e.SERVICES,
-  e.LOCATION && 'Location: ' + e.LOCATION,
-  e.PHONE_NUMBER && 'Phone: ' + e.PHONE_NUMBER,
-  e.TIKTOK && 'TikTok: ' + e.TIKTOK,
-  e.EMAIL && 'Email: ' + e.EMAIL,
-  F.AGENT_ROLE && 'Your role: ' + F.AGENT_ROLE,
-  F.LANGUAGE && 'Language to use (set by the owner, follow it): ' + F.LANGUAGE,
-  F.PERSONALITY && 'Personality (set by the owner, follow it): ' + F.PERSONALITY,
-  F.BRAND_SLOGAN && 'Brand slogan: ' + F.BRAND_SLOGAN,
-  F.CUSTOMER_GOAL && 'Goal with customers: ' + F.CUSTOMER_GOAL,
-  RULES && 'Important rules from the owner (always follow):\n' + RULES
+  ABOUT_OWNER,
+  'Business type: ' + BUSINESS_TYPE,
+  'Services: ' + SERVICES,
+  'Location: ' + LOCATION,
+  'Phone: ' + PHONE_NUMBER,
+  'TikTok: ' + TIKTOK,
+  'Email: ' + EMAIL,
+  'Your role: ' + AGENT_ROLE,
+  'Language to use: ' + LANGUAGE,
+  'Personality: ' + PERSONALITY,
+  'Brand slogan: ' + BRAND_SLOGAN,
+  'Important rules from the owner (always follow):\n' + RULES
 ].filter(Boolean).join('\n');
-const TAGLINE = process.env.AGENT_TAGLINE || 'ለጨዋታም ለስራም ዝግጁ';
+
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
-if (!GEMINI_KEY) { console.error('GEMINI_API_KEY በ.env ውስጥ የለም!'); process.exit(1); }
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+if (!GEMINI_KEY) { console.error('GEMINI_API_KEY በ.env ውስጥ የለም!'); }
 const RATE_LIMIT = Number(process.env.RATE_LIMIT) || 30;
+
 const SYSTEM = [
-  'You are "' + NAME + '", a personal AI assistant' + (OWNER ? ' that represents ' + OWNER + '.' : '.'),
-  'Default language: Amharic (Ge\'ez script). If the user writes in another language, reply in that language. If the user writes Amharic in Latin letters, reply in Amharic script.',
-  'Personality: warm, quick-witted and playful, like a smart funny friend, not a corporate bot. A little light humor is welcome. Use an emoji now and then, not in every message.',
-  'LENGTH RULE: match the energy and size of the message. Greetings and small talk get 1 or 2 short lines, maybe a light joke or a fun question back to keep the chat going. Quick questions get short answers. Only real tasks (plans, writing, analysis, comparisons) get a longer structured answer. Never turn a greeting into a plan or a lecture.',
-  'Be genuinely useful: when asked to do something, just do it. Ask at most one short clarifying question, and only if it is really needed.',
-  'Formatting: plain text. You may use **bold** for key words. No markdown headers (#), no horizontal rules, no tables. Simple numbered lines like "1." are fine for steps.',
-  'Never claim to be human. Do not invent facts about ' + (OWNER || 'the owner') + '; if you do not know something, say so briefly.',
-  ABOUT ? 'Background about ' + (OWNER || 'the owner') + ' and what you can help with:\n' + ABOUT : '',
-  ABOUT ? 'Customers may chat with you. For services, address and contact details use only the facts above. If something is not given (for example a price), say you do not know and suggest calling or messaging the business. Never invent prices. If a customer shows real interest (price, order, appointment), politely invite them once to share their name and phone number so the business can contact them; never pressure them.' : ''
-].filter(Boolean).join('\n');
+  'You are "' + NAME + '", the official AI assistant representing "' + OWNER + '".',
+  'Default language: Amharic (Ge\'ez script). If the user writes in another language, reply in that language.',
+  'Personality: ' + PERSONALITY,
+  'LENGTH RULE: match the energy and size of the message. Keep answers clear, helpful, and concise.',
+  'Formatting: plain text. You may use **bold** for key words.',
+  'Never claim to be human. Do not invent facts or prices about ' + OWNER + '.',
+  'Background about ' + OWNER + ' and what you must know:\n' + ABOUT,
+  'Customers may chat with you. For services, address and contact info, always use the details provided above.'
+].filter(Boolean).join('\n\n');
+
+const hits = new Map();
+function limited(ip) {
+  const now = Date.now();
+  const arr = (hits.get(ip) || []).filter(t => now - t < 60000);
+  if (arr.length >= RATE_LIMIT) return true;
+  arr.push(now);
+  hits.set(ip, arr);
+  return false;
+}
+
+function tidy(txt) {
+  return String(txt || '').trim();
+}
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-async function callGemini(contents) {
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent';
+
+async function callAI(contents) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`;
   let last;
   for (let i = 0; i < 3; i++) {
     try {
       const r = await fetch(url, {
         method: 'POST',
-        signal: AbortSignal.timeout(20000), signal: AbortSignal.timeout(20000), headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
-        body: JSON.stringify({ systemInstruction: { parts: [{ text: SYSTEM }] }, contents })
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(25000),
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM }] },
+          contents
+        })
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) {
@@ -60,55 +99,18 @@ async function callGemini(contents) {
         err.status = r.status;
         throw err;
       }
-      const text = (d.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
-      if (!text) throw new Error('empty reply');
-      return text;
+      return d.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || 'ይቅርታ፣ ምላሽ ማግኘት አልተቻለም።';
     } catch (e) {
       last = e;
-      console.error('try ' + (i + 1) + ': ' + e.message);
-      if (e.status && ![500, 503].includes(e.status)) break;
-      await sleep(1200 * (i + 1));
+      if (e.status === 429 || e.status === 503) await sleep(1500 * (i + 1));
+      else break;
     }
   }
   throw last;
 }
-const callAI = callGemini;
-const hits = new Map();
-function limited(ip) {
-  const now = Date.now();
-  const arr = (hits.get(ip) || []).filter(t => now - t < 600000);
-  arr.push(now);
-  hits.set(ip, arr);
-  return arr.length > RATE_LIMIT;
-}
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, v] of hits) if (!v.some(t => now - t < 600000)) hits.delete(k);
-}, 600000).unref();
-const tidy = t => t.replace(/([^\n።!?:፡])[ \t]*\n+[ \t]*(\*\*[^*\n]+\*\*)[ \t]*\n+[ \t]*/g, '$1 $2 ');
-const PHONE = /(?:\+?251|0)[\s-]?[79](?:[\s-]?\d){8}/;
-let ADMIN = process.env.ADMIN_KEY || '';
-if (!ADMIN) {
-  try { ADMIN = fs.readFileSync('admin_key.txt', 'utf8').trim(); }
-  catch (x) { ADMIN = require('crypto').randomBytes(8).toString('hex'); fs.writeFileSync('admin_key.txt', ADMIN); }
-}
-app.get('/admin', (req, res) => {
-  if (req.query.key !== ADMIN) return res.status(403).send('ተከልክሏል');
-  let rows = [];
-  try { rows = fs.readFileSync('chats.jsonl', 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)); } catch (x) {}
-  const by = new Map();
-  rows.forEach(r => { if (!by.has(r.v)) by.set(r.v, []); by.get(r.v).push(r); });
-  const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-  const list = [...by.entries()].map(([v, a]) => ({
-    v, a, last: a[a.length - 1].t,
-    phones: [...new Set(a.map(r => (String(r.q).match(PHONE) || [])[0]).filter(Boolean))]
-  })).sort((x, y) => y.last - x.last);
-  const card = c => '<div class="c' + (c.phones.length ? ' lead' : '') + '"><b>' + (c.phones.length ? '📞 ' + esc(c.phones.join(', ')) + ' · ' : '') + 'ደንበኛ ' + esc(c.v.slice(-4)) + '</b><small>' + new Date(c.last).toLocaleString('en-GB') + ' · ' + c.a.length + ' መልዕክት</small>' + c.a.map(r => '<p><i>' + esc(r.q) + '</i><br>' + esc(r.a) + '</p>').join('') + '</div>';
-  const leads = list.filter(c => c.phones.length);
-  const rest = list.filter(c => !c.phones.length);
-  res.send('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ደንበኞች</title><style>body{font:16px sans-serif;margin:12px;background:#111;color:#eee}.c{border:1px solid #333;border-radius:10px;padding:10px;margin:10px 0}.lead{border-color:#4ade80}small{color:#999;display:block}p{margin:8px 0}i{color:#a5b4fc}</style><h1>ደንበኞች</h1><h2>📞 ስልክ የሰጡ (' + leads.length + ')</h2>' + leads.map(card).join('') + '<h2>ሌሎች (' + rest.length + ')</h2>' + rest.map(card).join(''));
-});
+
 app.get('/api/info', (req, res) => res.json({ name: NAME, tagline: TAGLINE }));
+
 app.post('/api/chat', async (req, res) => {
   try {
     const ip = req.headers['cf-connecting-ip'] || (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip;
@@ -122,6 +124,19 @@ app.post('/api/chat', async (req, res) => {
     contents.push({ role: 'user', parts: [{ text: q }] });
     const reply = tidy(await callAI(contents));
     fs.appendFile('chats.jsonl', JSON.stringify({ t: Date.now(), v: String(req.body.vid || ip).slice(0, 40), q, a: reply }) + '\n', () => {});
+
+    if (process.env.TELEGRAM_BOT_TOKEN && process.env.ADMIN_CHAT_ID) {
+      fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: process.env.ADMIN_CHAT_ID,
+          text: `🔔 <b>አዲስ ጥያቄ (SEYA DESIGN)</b>\n\n❓ <b>ደንበኛ:</b> ${q}\n\n🤖 <b>መልስ:</b> ${reply.slice(0, 800)}`,
+          parse_mode: 'HTML'
+        })
+      }).catch(err => console.error('Telegram error:', err.message));
+    }
+
     res.json({ reply });
   } catch (e) {
     console.error(e.message);
@@ -129,9 +144,10 @@ app.post('/api/chat', async (req, res) => {
     res.status(500).json({ error: busy ? 'አገልግሎቱ ለጊዜው ተጨናንቋል። ትንሽ ቆይተው ይሞክሩ።' : 'ለጊዜው አልተሳካም። እንደገና ይሞክሩ።' });
   }
 });
+
 app.get('/manifest.json', (req, res) => res.json({
   name: NAME,
-  short_name: NAME.slice(0, 12),
+  short_name: 'SEYA DESIGN',
   start_url: '/',
   display: 'standalone',
   background_color: '#0f1320',
@@ -142,9 +158,11 @@ app.get('/manifest.json', (req, res) => res.json({
     { src: '/icon/512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
   ]
 }));
+
 app.get('/sw.js', (req, res) => {
   res.type('application/javascript').send('self.addEventListener("fetch", function () {});');
 });
+
 const CRC = new Uint32Array(256).map((_, n) => {
   let c = n;
   for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
@@ -192,6 +210,7 @@ app.get('/icon/:size.png', (req, res) => {
   const size = req.params.size === '512' ? 512 : 192;
   res.type('image/png').send(makeIcon(size));
 });
+
 app.use(express.static('public'));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
