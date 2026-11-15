@@ -58,8 +58,8 @@ const ABOUT = [
   'Important rules from the owner (always follow):\n' + RULES
 ].filter(Boolean).join('\n');
 
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const GEMINI_KEY = "";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 const RATE_LIMIT = Number(process.env.RATE_LIMIT) || 30;
 
 const SYSTEM = [
