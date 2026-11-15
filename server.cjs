@@ -5,6 +5,17 @@ const fs = require('fs');
 const app = express();
 app.use(express.json({ limit: '50kb' }));
 
+// --- በሁለቱ ነጠላ ጥቅሶች ('') መሃል ቶከንህን እና አይዲህን አስገባ ---
+const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const ADMIN_ID = process.env.ADMIN_CHAT_ID || '';
+
+// የድሮ የቴሌግራም ግንኙነትን (Webhook) በራሱ የሚያጸዳ ኮድ
+if (TG_TOKEN) {
+  fetch(`https://api.telegram.org/bot${TG_TOKEN}/deleteWebhook?drop_pending_updates=true`)
+    .then(() => console.log('Telegram cleaned and ready!'))
+    .catch(() => {});
+}
+
 const e = process.env;
 const OWNER = e.OWNER_NAME || 'SEYA DESIGN';
 const NAME = e.AGENT_NAME || 'የSEYA DESIGN ረዳት';
@@ -49,7 +60,6 @@ const ABOUT = [
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-if (!GEMINI_KEY) { console.error('GEMINI_API_KEY በ.env ውስጥ የለም!'); }
 const RATE_LIMIT = Number(process.env.RATE_LIMIT) || 30;
 
 const SYSTEM = [
@@ -125,12 +135,12 @@ app.post('/api/chat', async (req, res) => {
     const reply = tidy(await callAI(contents));
     fs.appendFile('chats.jsonl', JSON.stringify({ t: Date.now(), v: String(req.body.vid || ip).slice(0, 40), q, a: reply }) + '\n', () => {});
 
-    if ("8979276991:AAHu97FEZQhTOdY0W9rVyZGoY5rLyuFeU28..." && "ID: 5242780887") {
-      fetch(`https://api.telegram.org/bot${"8979276991:AAHu97FEZQhTOdY0W9rVyZGoY5rLyuFeU28..."}/sendMessage`, {
+    if (TG_TOKEN && ADMIN_ID) {
+      fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chat_id: "ID: 5242780887",
+          chat_id: ADMIN_ID,
           text: `🔔 <b>አዲስ ጥያቄ (SEYA DESIGN)</b>\n\n❓ <b>ደንበኛ:</b> ${q}\n\n🤖 <b>መልስ:</b> ${reply.slice(0, 800)}`,
           parse_mode: 'HTML'
         })
