@@ -125,12 +125,12 @@ app.post('/api/chat', async (req, res) => {
     const reply = tidy(await callAI(contents));
     fs.appendFile('chats.jsonl', JSON.stringify({ t: Date.now(), v: String(req.body.vid || ip).slice(0, 40), q, a: reply }) + '\n', () => {});
 
-    if (process.env.TELEGRAM_BOT_TOKEN && process.env.ADMIN_CHAT_ID) {
-      fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    if ("8979276991:AAHu97FEZQhTOdY0W9rVyZGoY5rLyuFeU28..." && "ID: 5242780887") {
+      fetch(`https://api.telegram.org/bot${"8979276991:AAHu97FEZQhTOdY0W9rVyZGoY5rLyuFeU28..."}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chat_id: process.env.ADMIN_CHAT_ID,
+          chat_id: "ID: 5242780887",
           text: `🔔 <b>አዲስ ጥያቄ (SEYA DESIGN)</b>\n\n❓ <b>ደንበኛ:</b> ${q}\n\n🤖 <b>መልስ:</b> ${reply.slice(0, 800)}`,
           parse_mode: 'HTML'
         })
