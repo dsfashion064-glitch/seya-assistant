@@ -119,6 +119,51 @@ async function callAI(contents) {
   throw last;
 }
 
+
+// --- የቴሌግራም ሪሞት ኮንትሮል (Two-Way Remote Control) ---
+const EXTRA_FILE = 'extra_rules.txt';
+global.LIVE_UPDATES = fs.existsSync(EXTRA_FILE) ? fs.readFileSync(EXTRA_FILE, 'utf8') : '';
+let tgOffset = 0;
+
+if (TG_TOKEN && ADMIN_ID) {
+  setInterval(async () => {
+    try {
+      const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getUpdates?offset=${tgOffset}&timeout=5`);
+      const d = await r.json();
+      if (d.ok && Array.isArray(d.result)) {
+        for (const u of d.result) {
+          tgOffset = u.update_id + 1;
+          const msg = u.message;
+          if (!msg || !msg.text || String(msg.chat.id) !== String(ADMIN_ID)) continue;
+          const txt = msg.text.trim();
+          let replyMsg = '';
+
+          if (txt === '/start' || txt === '/help') {
+            replyMsg = '👋 <b>ሰላም ሰዒድ! የSEYA DESIGN ሪሞት ኮንትሮል ዝግጁ ነው።</b>\n\n✍️ ማንኛውንም አዲስ መረጃ ወይም ህግ እዚህ ብትጽፍልኝ ወዲያውኑ ለዌብሳይቱ AI አስተምረዋለሁ!\n\n📋 <b>ትዕዛዞች፦</b>\n/list - የተጨመሩ አዳዲስ መረጃዎችን ለማየት\n/clear - አዳዲስ የተጨመሩትን ለማጥፋት (ወደ ኦሪጅናሉ ለመመለስ)';
+          } else if (txt === '/list') {
+            replyMsg = global.LIVE_UPDATES ? `📋 <b>አሁን ላይ የተጨመሩ መመሪያዎች፦</b>\n\n${global.LIVE_UPDATES}` : 'ℹ️ እስካሁን በቴሌግራም የተጨመረ አዲስ መመሪያ የለም (ኦሪጅናል ኮዱ ብቻ እየሰራ ነው)።';
+          } else if (txt === '/clear') {
+            global.LIVE_UPDATES = '';
+            if (fs.existsSync(EXTRA_FILE)) fs.unlinkSync(EXTRA_FILE);
+            replyMsg = '🗑️ በቴሌግራም የተጨመሩ መመሪያዎች ተሰርዘዋል። ዌብሳይቱ ወደ መጀመሪያው ኦሪጅናል መረጃ ተመልሷል!';
+          } else {
+            global.LIVE_UPDATES += (global.LIVE_UPDATES ? '\n- ' : '- ') + txt;
+            fs.writeFileSync(EXTRA_FILE, global.LIVE_UPDATES);
+            replyMsg = `✅ <b>አዲሱ መረጃ ወደ ዌብሳይቱ ተጨምሯል!</b>\n\n📌 <b>የተጨመረው፦</b> "${txt}"\n\nከአሁን ሰዓት ጀምሮ ደንበኞች ሲጠይቁ ይህንን መረጃ ተጠቅሜ እመልሳለሁ።`;
+          }
+
+          await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: ADMIN_ID, text: replyMsg, parse_mode: 'HTML' })
+          });
+        }
+      }
+    } catch (e) {}
+  }, 4000);
+}
+// ----------------------------------------------------
+
 app.get('/api/info', (req, res) => res.json({ name: NAME, tagline: TAGLINE }));
 
 app.post('/api/chat', async (req, res) => {
@@ -141,7 +186,7 @@ app.post('/api/chat', async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: ADMIN_ID,
-          text: `🔔 <b>አዲስ ጥያቄ (SEYA DESIGN)</b>\n\n❓ <b>ደንበኛ:</b> ${q}\n\n🤖 <b>መልስ:</b> ${reply.slice(0, 800)}`,
+          text: `${/(?:\+?251|0)?[97]\d{8}/.test(q) ? "🚨 📞 <b>ደንበኛ ስልክ ቁጥር ልኳል!</b>\n" : "🔔 <b>አዲስ ጥያቄ (SEYA DESIGN)</b>\n"}\n❓ <b>ደንበኛ:</b> ${q}\n\n🤖 <b>መልስ:</b> ${reply.slice(0, 800)}`,
           parse_mode: 'HTML'
         })
       }).catch(err => console.error('Telegram error:', err.message));
