@@ -6,8 +6,8 @@ const app = express();
 app.use(express.json({ limit: '50kb' }));
 
 // --- በሁለቱ ነጠላ ጥቅሶች ('') መሃል ቶከንህን እና አይዲህን አስገባ ---
-const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
-const ADMIN_ID = process.env.ADMIN_CHAT_ID || '';
+const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+const ADMIN_ID = process.env.ADMIN_CHAT_ID || "5242780887";
 
 // የድሮ የቴሌግራም ግንኙነትን (Webhook) በራሱ የሚያጸዳ ኮድ
 if (TG_TOKEN) {
