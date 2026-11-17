@@ -144,6 +144,7 @@ if (TG_TOKEN && ADMIN_ID && GEMINI_KEY) {
           const msg = u.message;
           if (!msg || !msg.text || String(msg.chat.id) !== String(ADMIN_ID)) continue;
           if (u.update_id < tgOffset) continue;
+          if (u.update_id < tgOffset) continue;
           const txt = msg.text.trim();
           let replyMsg = '';
 
