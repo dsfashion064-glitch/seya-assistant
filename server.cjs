@@ -96,7 +96,10 @@ async function callAI(contents) {
         body: JSON.stringify({
           systemInstruction: {
             parts: [{
-              text: SYSTEM + (
+              text: SYSTEM +
+            (fs.existsSync('extra_rules.txt')
+              ? '\n\nNEW OWNER INSTRUCTIONS:\n' + fs.readFileSync('extra_rules.txt', 'utf8')
+              : '') + (
                 fs.existsSync('knowledge.json')
                   ? '\\n\\nAPPROVED OWNER KNOWLEDGE (follow these facts):\\n' +
                     JSON.parse(fs.readFileSync('knowledge.json', 'utf8'))
@@ -128,65 +131,121 @@ async function callAI(contents) {
 
 
 
-// --- የተሻሻለው የቴሌግራም AI Agent (Two-Way Smart Remote Control) ---
+
+
+// --- SMART TELEGRAM ADMIN AGENT ---
 const EXTRA_FILE = 'extra_rules.txt';
-global.LIVE_UPDATES = fs.existsSync(EXTRA_FILE) ? fs.readFileSync(EXTRA_FILE, 'utf8') : '';
 let tgOffset = 0;
+let tgBusy = false;
 
 if (TG_TOKEN && ADMIN_ID && GEMINI_KEY) {
-  setInterval(async () => {
-    try {
-      const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getUpdates?offset=${tgOffset}&timeout=5`);
-      const d = await r.json();
-      if (d.ok && Array.isArray(d.result)) {
-        for (const u of d.result) {
-          tgOffset = Math.max(tgOffset, u.update_id + 1);
-          const msg = u.message;
-          if (!msg || !msg.text || String(msg.chat.id) !== String(ADMIN_ID)) continue;
-          if (u.update_id < tgOffset) continue;
-          if (u.update_id < tgOffset) continue;
-          if (u.update_id < tgOffset) continue;
-          const txt = msg.text.trim();
-          let replyMsg = '';
+  console.log('Telegram Admin Agent enabled');
 
-          if (txt === '/start' || txt === '/help') {
-            replyMsg = '👋 <b>ሰላም ሰዒድ! የSEYA DESIGN ስማርት AI ሪሞት ኮንትሮል ዝግጁ ነው።</b>\n\n🤖 ከእኔ ጋር እንደ ሰው ማውራት ትችላለህ! ማንኛውንም አዲስ መረጃ፣ የዋጋ ለውጥ ወይም ማስታወሻ በድምፅ ወይም በጽሑፍ አብራርተህ ላክልኝ፤ እኔ ራሴ አጣርቼ ዌብሳይቱ ላይ እመዘግበዋለሁ።\n\n📋 <b>ትዕዛዞች፦</b>\n/list - እስካሁን የተጨመሩትን ለማየት\n/clear - ሁሉንም አዳዲስ መረጃዎች ለማጥፋት (ወደ ኦሪጅናሉ ለመመለስ)';
-          } else if (txt === '/list') {
-            replyMsg = global.LIVE_UPDATES ? `📋 <b>አሁን ላይ በባለቤቱ የተጨመሩ መመሪያዎች፦</b>\n\n${global.LIVE_UPDATES}` : 'ℹ️ እስካሁን የተጨመረ አዲስ መመሪያ የለም።';
-          } else if (txt === '/clear') {
-            global.LIVE_UPDATES = '';
-            if (fs.existsSync(EXTRA_FILE)) fs.unlinkSync(EXTRA_FILE);
-            replyMsg = '🗑️ የተጨመሩ መረጃዎች ተሰርዘዋል! ዌብሳይቱ ወደ መጀመሪያው ኦሪጅናል መረጃ ተመልሷል።';
-          } else {
-            // Ask Gemini to format the user's instruction nicely for the web AI
-            const aiPrompt = `አንተ የሰዒድ ፋሽን ዲዛይን (Seya Design) ረዳት ነህ። ባለቤቱ ሰዒድ ቴሌግራም ላይ ሆኖ የሚከተለውን መመሪያ ወይም መረጃ ሰጥቷል፦ "${txt}". 
-እባክህ ይህንን መረጃ ለዌብሳይቱ ደንበኞች ማስተማሪያ የሚሆን ግልጽ እና አጭር ህግ ወይም መረጃ አድርገህ አዘጋጀው (በአማርኛ)። ከዚህ በፊት ከነበሩት ጋር የሚስማማ ይሁን።`;
-            
-            const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`, {
+  setInterval(async () => {
+    if (tgBusy) return;
+    tgBusy = true;
+
+    try {
+      const response = await fetch(
+        'https://api.telegram.org/bot' + TG_TOKEN +
+        '/getUpdates?offset=' + tgOffset + '&timeout=10'
+      );
+
+      const data = await response.json();
+      if (!data.ok || !Array.isArray(data.result)) return;
+
+      for (const update of data.result) {
+        tgOffset = update.update_id + 1;
+
+        const msg = update.message;
+        if (!msg || !msg.text) continue;
+        if (String(msg.chat.id) !== String(ADMIN_ID)) continue;
+
+        const txt = msg.text.trim();
+        let reply = '';
+
+        if (txt === '/start' || txt === '/help') {
+          reply =
+            '👋 ሰላም! SEYA DESIGN Admin AI ዝግጁ ነው።\n\n' +
+            'አዲስ መረጃ በቀጥታ ላክ።\n\n' +
+            '/list - የተጨመሩ መመሪያዎች\n' +
+            '/clear - የተጨመሩ መመሪያዎችን ማጥፋት';
+
+        } else if (txt === '/list') {
+          reply = fs.existsSync(EXTRA_FILE)
+            ? '📋 የተጨመሩ መረጃዎች፦\n\n' +
+              fs.readFileSync(EXTRA_FILE, 'utf8')
+            : 'ℹ️ እስካሁን አዲስ መረጃ አልተጨመረም።';
+
+        } else if (txt === '/clear') {
+          if (fs.existsSync(EXTRA_FILE)) fs.unlinkSync(EXTRA_FILE);
+          reply = '🗑️ የተጨመሩ መመሪያዎች ተሰርዘዋል።';
+
+        } else {
+          const prompt =
+            'አንተ የSEYA DESIGN የባለቤቱ መረጃ አደራጅ ነህ።\n' +
+            'ባለቤቱ የላከውን መረጃ በአማርኛ ግልጽና አጭር የደንበኛ መመሪያ አድርግ።\n' +
+            'የተሰጠውን እውነታ አትቀይር። አዲስ ዋጋ ወይም መረጃ አትፍጠር።\n\n' +
+            'የባለቤቱ መልዕክት:\n' + txt;
+
+          const aiResponse = await fetch(
+            'https://generativelanguage.googleapis.com/v1beta/models/' +
+            GEMINI_MODEL + ':generateContent?key=' + GEMINI_KEY,
+            {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: aiPrompt }] }] })
-            });
-            const aiData = await aiRes.json();
-            const formattedRule = aiData.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim() || txt;
+              body: JSON.stringify({
+                contents: [{
+                  role: 'user',
+                  parts: [{ text: prompt }]
+                }]
+              })
+            }
+          );
 
-            global.LIVE_UPDATES += (global.LIVE_UPDATES ? '\n- ' : '- ') + formattedRule;
-            fs.writeFileSync(EXTRA_FILE, global.LIVE_UPDATES);
-            
-            replyMsg = `✅ <b>ትዕዛዝህ ተረድቶ ዌብሳይቱ ላይ ተመዝግቧል!</b>\n\n📌 <b>የተስተካከለው መረጃ፦</b>\n"${formattedRule}"\n\nአሁን ደንበኞች ሲጠይቁ ይህንን አዲስ መረጃ አብሮ ይጠቀማል።`;
+          const aiData = await aiResponse.json();
+
+          if (!aiResponse.ok) {
+            throw new Error(aiData.error?.message || 'Gemini request failed');
           }
 
-          await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+          const formatted = aiData.candidates?.[0]?.content?.parts
+            ?.map(p => p.text || '').join('').trim();
+
+          const rule = formatted || txt;
+
+          fs.appendFileSync(
+            EXTRA_FILE,
+            (fs.existsSync(EXTRA_FILE) ? '\n\n' : '') + '- ' + rule
+          );
+
+          reply =
+            '✅ መረጃው ተመዝግቧል!\n\n' +
+            '📌 የተዘጋጀው፦\n' + rule +
+            '\n\nየWebsite AI በሚቀጥለው ጥያቄ ይህንን ይጠቀማል።';
+        }
+
+        await fetch(
+          'https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage',
+          {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: ADMIN_ID, text: replyMsg, parse_mode: 'HTML' })
-          });
-        }
+            body: JSON.stringify({
+              chat_id: ADMIN_ID,
+              text: reply.slice(0, 3900)
+            })
+          }
+        );
       }
-    } catch (e) {}
-  }, 4000);
+    } catch (error) {
+      console.error('Telegram Agent:', error.message);
+    } finally {
+      tgBusy = false;
+    }
+  }, 12000);
 }
-// ----------------------------------------------------
+// --- END SMART TELEGRAM ADMIN AGENT ---
+
 
 app.get('/api/info', (req, res) => res.json({ name: NAME, tagline: TAGLINE }));
 
