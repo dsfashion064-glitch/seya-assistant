@@ -6,15 +6,10 @@ const app = express();
 app.use(express.json({ limit: '50kb' }));
 
 // --- በሁለቱ ነጠላ ጥቅሶች ('') መሃል ቶከንህን እና አይዲህን አስገባ ---
-const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8979276991:AAHL62vzkTZqtJmGXUWNhSLhy5icXx6dSSE";
-const ADMIN_ID = process.env.ADMIN_CHAT_ID || "5242780887";
+const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
+const ADMIN_ID = process.env.ADMIN_CHAT_ID || process.env.OWNER_CHAT_ID;
 
-// የድሮ የቴሌግራም ግንኙነትን (Webhook) በራሱ የሚያጸዳ ኮድ
-if (TG_TOKEN) {
-  fetch(`https://api.telegram.org/bot${TG_TOKEN}/deleteWebhook?drop_pending_updates=true`)
-    .then(() => console.log('Telegram cleaned and ready!'))
-    .catch(() => {});
-}
+// Telegram webhook cleanup disabled; preserve pending updates.
 
 const e = process.env;
 const OWNER = e.OWNER_NAME || 'SEYA DESIGN';
@@ -99,7 +94,17 @@ async function callAI(contents) {
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM }] },
+          systemInstruction: {
+            parts: [{
+              text: SYSTEM + (
+                fs.existsSync('knowledge.json')
+                  ? '\\n\\nAPPROVED OWNER KNOWLEDGE (follow these facts):\\n' +
+                    JSON.parse(fs.readFileSync('knowledge.json', 'utf8'))
+                      .map(item => '- ' + item.rule).join('\\n')
+                  : ''
+              )
+            }]
+          },
           contents
         })
       });
@@ -138,6 +143,7 @@ if (TG_TOKEN && ADMIN_ID && GEMINI_KEY) {
           tgOffset = Math.max(tgOffset, u.update_id + 1);
           const msg = u.message;
           if (!msg || !msg.text || String(msg.chat.id) !== String(ADMIN_ID)) continue;
+          if (u.update_id < tgOffset) continue;
           const txt = msg.text.trim();
           let replyMsg = '';
 
