@@ -94,20 +94,7 @@ async function callAI(contents) {
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
-          systemInstruction: {
-            parts: [{
-              text: SYSTEM +
-            (fs.existsSync('extra_rules.txt')
-              ? '\n\nNEW OWNER INSTRUCTIONS:\n' + fs.readFileSync('extra_rules.txt', 'utf8')
-              : '') + (
-                fs.existsSync('knowledge.json')
-                  ? '\\n\\nAPPROVED OWNER KNOWLEDGE (follow these facts):\\n' +
-                    JSON.parse(fs.readFileSync('knowledge.json', 'utf8'))
-                      .map(item => '- ' + item.rule).join('\\n')
-                  : ''
-              )
-            }]
-          },
+          systemInstruction: { parts: [{ text: SYSTEM + (global.LIVE_UPDATES ? "\n\n[ወቅታዊና አዲስ መመሪያ ከሱቁ ባለቤት - ይህንን ቅድሚያ ሰጥተህ ተግብር]:\n" + global.LIVE_UPDATES : "") }] },
           contents
         })
       });
@@ -246,6 +233,107 @@ if (TG_TOKEN && ADMIN_ID && GEMINI_KEY) {
 }
 // --- END SMART TELEGRAM ADMIN AGENT ---
 
+
+
+// --- የተሻሻለው የቴሌግራም AI Agent (True Live Two-Way Control) ---
+const EXTRA_FILE = 'extra_rules.txt';
+// ቀድሞ በስህተት "Hey friend" የሚል ተመዝግቦ ከነበረ ማጽዳት
+if (fs.existsSync(EXTRA_FILE) && fs.readFileSync(EXTRA_FILE, 'utf8').includes('Hey friend')) {
+  fs.unlinkSync(EXTRA_FILE);
+}
+global.LIVE_UPDATES = fs.existsSync(EXTRA_FILE) ? fs.readFileSync(EXTRA_FILE, 'utf8') : '';
+let tgOffset = 0;
+let isPolling = false;
+const processedIds = new Set();
+let adminChatHistory = [];
+
+async function pollTelegramLive() {
+  if (isPolling || !TG_TOKEN || !ADMIN_ID || !GEMINI_KEY) return;
+  isPolling = true;
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getUpdates?offset=${tgOffset}&timeout=10`);
+    const d = await r.json();
+    if (d.ok && Array.isArray(d.result)) {
+      for (const u of d.result) {
+        tgOffset = u.update_id + 1;
+        if (processedIds.has(u.update_id)) continue;
+        processedIds.add(u.update_id);
+        if (processedIds.size > 500) processedIds.clear();
+
+        const msg = u.message;
+        if (!msg || !msg.text || String(msg.chat.id) !== String(ADMIN_ID)) continue;
+        const txt = msg.text.trim();
+        let replyMsg = '';
+
+        if (txt === '/start' || txt === '/help') {
+          replyMsg = '👋 <b>ሰላም ሰዒድ! አሁን በቀጥታ (Live) ተገናኝተናል።</b>\n\n💬 ከእኔ ጋር ማንኛውንም ነገር በቀጥታ ማውራት፣ መማከር ወይም መጠየቅ ትችላለህ።\n🌐 ለዌብሳይቱ ደንበኞች አዲስ መረጃ፣ ዋጋ ወይም ማስታወቂያ እንዲገባ ስትፈልግ ደግሞ በንግግርህ ውስጥ ንገረኝ፤ ወዲያውኑ ዌብሳይቱ ላይ በቀጥታ አስገባዋለሁ!\n\n📋 <b>ትዕዛዞች፦</b>\n/list - ዌብሳይቱ ላይ አሁን ያሉ ተጨማሪ መረጃዎችን ለማየት\n/clear - ተጨማሪ መረጃዎችን አጥፍቶ ወደ ኦሪጅናሉ ለመመለስ';
+        } else if (txt === '/list') {
+          replyMsg = global.LIVE_UPDATES
+            ? `📋 <b>አሁን ዌብሳይቱ ላይ በቀጥታ እየሰሩ ያሉ አዳዲስ መረጃዎች፦</b>\n\n${global.LIVE_UPDATES}`
+            : 'ℹ️ አሁን ላይ ተጨማሪ አዲስ መረጃ የለም (ዌብሳይቱ በኦሪጅናል ኮዱ እየሰራ ነው)።';
+        } else if (txt === '/clear') {
+          global.LIVE_UPDATES = '';
+          adminChatHistory = [];
+          if (fs.existsSync(EXTRA_FILE)) fs.unlinkSync(EXTRA_FILE);
+          replyMsg = '🗑️ በቴሌግራም የተጨመሩ መረጃዎች ተሰርዘዋል። ዌብሳይቱ ወደ መጀመሪያው ኦሪጅናል መረጃ ተመልሷል!';
+        } else {
+          const adminSystem = `አንተ የ "Seya Design" (ሰያ ዲዛይን) ዋና የቴሌግራም AI ረዳት ነህ። አሁን በቀጥታ (Live) እያወራህ ያለኸው ከሱቁ ባለቤት ከሰዒድ (Said) ጋር ነው።
+የዌብሳይቱ መሰረታዊ መረጃ፦
+${ABOUT}
+
+አሁን ዌብሳይቱ ላይ ተጨምረው በቀጥታ እየሰሩ ያሉ አዳዲስ መረጃዎች፦
+${global.LIVE_UPDATES || '(ምንም ተጨማሪ አዲስ መረጃ የለም)'}
+
+የአንተ ሚና፦
+1. ሰዒድ ሰላምታ ካቀረበልህ፣ ጥያቄ ከጠየቀህ ወይም ሀሳብ ካዋየህ፣ እንደ ብልህ የቢዝነስ አጋሩ በቀጥታ (Live) በአማርኛ አነጋግረው። በጭራሽ ተመሳሳይ የሽምደዳ መልስ አትስጠው።
+2. ሰዒድ ለዌብሳይቱ ደንበኞች የሚሆን አዲስ መረጃ፣ የዋጋ ለውጥ፣ ቅናሽ፣ አዲስ ጨርቅ ወይም ህግ እንድትጨምር/እንድታስተካክል ካዘዘህ ብቻ፣ ለእሱ ከምትሰጠው ተፈጥሯዊ መልስ መጨረሻ ላይ አዲሱን ህግ በዚህ ምልክት ውስጥ አስቀምጥ፦
+<UPDATE_WEB>እዚህ ጋር ለዌብሳይቱ AI የሚሆነውን ግልጽ መመሪያ ጻፍ</UPDATE_WEB>
+3. ሰዒድ ተራ ወሬ ወይም ጥያቄ እየጠየቀህ ከሆነ ግን <UPDATE_WEB> የሚለውን ምልክት በፍጹም አትጠቀም።`;
+
+          adminChatHistory.push({ role: 'user', parts: [{ text: txt }] });
+          if (adminChatHistory.length > 10) adminChatHistory = adminChatHistory.slice(-10);
+
+          const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: adminSystem }] },
+              contents: adminChatHistory
+            })
+          });
+          const aiData = await aiRes.json();
+          let aiReply = aiData.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim() || 'ይቅርታ ሰዒድ፣ ለጊዜው የኔትወርክ መጨናነቅ አጋጥሞኛል። እንደገና ጻፍልኝ።';
+
+          adminChatHistory.push({ role: 'model', parts: [{ text: aiReply }] });
+
+          const match = aiReply.match(/<UPDATE_WEB>([\s\S]*?)<\/UPDATE_WEB>/);
+          if (match && match[1]) {
+            const newRule = match[1].trim();
+            global.LIVE_UPDATES += (global.LIVE_UPDATES ? '\n- ' : '- ') + newRule;
+            fs.writeFileSync(EXTRA_FILE, global.LIVE_UPDATES);
+            aiReply = aiReply.replace(/<UPDATE_WEB>[\s\S]*?<\/UPDATE_WEB>/, '').trim();
+            replyMsg = `${aiReply}\n\n🌐 <b>[በቀጥታ ዌብሳይቱ ላይ ተመዝግቧል]:</b>\n📌 <i>"${newRule}"</i>`;
+          } else {
+            replyMsg = aiReply;
+          }
+        }
+
+        await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: ADMIN_ID, text: replyMsg, parse_mode: 'HTML' })
+        });
+      }
+    }
+  } catch (e) {
+    console.error('TG Poll Error:', e.message);
+  } finally {
+    isPolling = false;
+    setTimeout(pollTelegramLive, 1500);
+  }
+}
+pollTelegramLive();
+// ----------------------------------------------------
 
 app.get('/api/info', (req, res) => res.json({ name: NAME, tagline: TAGLINE }));
 
