@@ -11,9 +11,6 @@ const ADMIN_ID = process.env.ADMIN_CHAT_ID || "5242780887";
 
 // የድሮ የቴሌግራም ግንኙነትን (Webhook) በራሱ የሚያጸዳ ኮድ
 if (TG_TOKEN) {
-  fetch(`https://api.telegram.org/bot${TG_TOKEN}/deleteWebhook?drop_pending_updates=true`)
-    .then(() => console.log('Telegram cleaned and ready!'))
-    .catch(() => {});
 }
 
 const e = process.env;
