@@ -20,11 +20,10 @@
     body { background: var(--bg); color: var(--text); line-height: 1.6; padding-bottom: 40px; }
     a { color: inherit; text-decoration: none; }
 
-    /* Top Header */
     header {
       background: linear-gradient(135deg, #161b2e 0%, #0b0e17 100%);
       border-bottom: 1px solid var(--border);
-      padding: 16px 20px;
+      padding: 14px 18px;
       position: sticky;
       top: 0;
       z-index: 50;
@@ -35,41 +34,39 @@
       gap: 10px;
     }
     .brand h1 {
-      font-size: 1.35rem;
+      font-size: 1.3rem;
       font-weight: 800;
       background: linear-gradient(90deg, #f472b6, #f59e0b);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      letter-spacing: 0.5px;
     }
-    .brand p { font-size: 0.78rem; color: var(--muted); }
-    .header-actions { display: flex; gap: 8px; }
+    .brand p { font-size: 0.76rem; color: var(--muted); }
     .btn-call {
       background: rgba(245, 158, 11, 0.15);
       border: 1px solid var(--accent);
       color: var(--accent);
       padding: 6px 12px;
       border-radius: 99px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 600;
     }
 
-    .container { max-width: 820px; margin: 0 auto; padding: 16px; }
+    .container { max-width: 840px; margin: 0 auto; padding: 14px; }
 
-    /* 1. AI ASSISTANT SECTION FIRST (TOP) */
+    /* 1. AI ASSISTANT SECTION FIRST */
     .ai-hero {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 18px;
-      padding: 18px;
+      padding: 16px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-      margin-bottom: 24px;
+      margin-bottom: 22px;
     }
     .ai-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       padding-bottom: 10px;
       border-bottom: 1px solid var(--border);
     }
@@ -77,30 +74,37 @@
     .ai-badge {
       background: rgba(34, 197, 94, 0.15);
       color: #4ade80;
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       padding: 3px 10px;
       border-radius: 99px;
       border: 1px solid rgba(34, 197, 94, 0.3);
     }
     .chat-box {
-      height: 310px;
+      height: 300px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      padding: 8px 4px;
-      margin-bottom: 12px;
+      gap: 10px;
+      padding: 6px 4px;
+      margin-bottom: 10px;
     }
     .msg {
-      max-width: 85%;
+      max-width: 86%;
       padding: 10px 14px;
       border-radius: 14px;
-      font-size: 0.93rem;
+      font-size: 0.92rem;
       white-space: pre-wrap;
     }
     .msg.bot {
       background: #1e263d;
       border: 1px solid var(--border);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    .msg.owner {
+      background: linear-gradient(135deg, #065f46, #047857);
+      border: 1px solid #10b981;
+      color: #ecfdf5;
       align-self: flex-start;
       border-bottom-left-radius: 4px;
     }
@@ -117,12 +121,11 @@
       margin-bottom: 6px;
     }
 
-    /* Quick Prompt Chips inside AI */
     .quick-chips {
       display: flex;
       gap: 8px;
       overflow-x: auto;
-      padding-bottom: 10px;
+      padding-bottom: 8px;
       margin-bottom: 8px;
     }
     .chip {
@@ -137,7 +140,6 @@
     }
     .chip:hover { border-color: var(--primary); }
 
-    /* Media Preview Bar */
     .media-preview {
       display: none;
       align-items: center;
@@ -159,7 +161,6 @@
       cursor: pointer;
     }
 
-    /* Input Bar with Image & Voice */
     .input-bar {
       display: flex;
       align-items: center;
@@ -183,18 +184,14 @@
       cursor: pointer;
       flex-shrink: 0;
     }
-    .icon-btn.recording {
-      background: #dc2626;
-      border-color: #f87171;
-      animation: pulse 1s infinite;
-    }
+    .icon-btn.recording { background: #dc2626; animation: pulse 1s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     .input-bar input[type="text"] {
       flex: 1;
       background: transparent;
       border: none;
       color: var(--text);
-      font-size: 0.95rem;
+      font-size: 0.94rem;
       outline: none;
       padding: 6px;
     }
@@ -210,38 +207,36 @@
       flex-shrink: 0;
     }
 
-    /* 2. MULTI-OPTION SECTIONS BELOW */
-    .section-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      margin: 26px 0 12px;
+    /* 2. GALLERY & CATEGORY FILTER */
+    .section-header {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      color: #f8fafc;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 26px 0 12px;
     }
-    .grid-options {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
-      gap: 12px;
-    }
-    .option-card {
+    .section-title { font-size: 1.12rem; font-weight: 700; }
+    .cat-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .cat-tab {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
+      color: var(--muted);
+      padding: 6px 12px;
+      border-radius: 99px;
+      font-size: 0.8rem;
       cursor: pointer;
-      transition: 0.2s;
     }
-    .option-card:hover { background: var(--card-hover); border-color: var(--primary); }
-    .option-card .emoji { font-size: 1.6rem; margin-bottom: 6px; display: block; }
-    .option-card h3 { font-size: 0.98rem; margin-bottom: 4px; }
-    .option-card p { font-size: 0.8rem; color: var(--muted); }
+    .cat-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      font-weight: 600;
+    }
 
-    /* Photo Showcase / Style Gallery */
     .gallery-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
       gap: 14px;
     }
     .style-card {
@@ -252,15 +247,23 @@
       display: flex;
       flex-direction: column;
     }
+    .style-img {
+      width: 100%;
+      height: 210px;
+      object-fit: cover;
+      display: block;
+      cursor: pointer;
+    }
     .style-banner {
-      height: 110px;
+      height: 120px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 2.6rem;
+      background: linear-gradient(135deg, #4c1d95, #831843);
     }
     .style-body { padding: 14px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-    .style-body h4 { font-size: 1rem; margin-bottom: 4px; }
+    .style-body h4 { font-size: 0.98rem; margin-bottom: 4px; }
     .style-body p { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; }
     .btn-order {
       background: #1e263d;
@@ -275,17 +278,39 @@
     }
     .btn-order:hover { background: var(--primary); color: #fff; }
 
-    /* Booking & Direct Order Form */
+    /* Lightbox Modal for full photo view */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-content {
+      max-width: 500px;
+      width: 100%;
+      background: var(--card);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .modal-content img { width: 100%; max-height: 65vh; object-fit: contain; background: #000; }
+    .modal-footer { padding: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
+    /* 3. QUICK ORDER & APPOINTMENT */
     .order-panel {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 18px;
-      margin-top: 12px;
+      padding: 16px;
+      margin-top: 10px;
     }
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
       gap: 10px;
       margin-bottom: 10px;
     }
@@ -310,18 +335,17 @@
       cursor: pointer;
     }
 
-    /* Footer Info */
     .info-bar {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 16px;
-      margin-top: 24px;
+      margin-top: 22px;
       display: flex;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 12px;
-      font-size: 0.85rem;
+      gap: 10px;
+      font-size: 0.84rem;
       color: var(--muted);
     }
   </style>
@@ -333,21 +357,19 @@
       <h1>✨ SEYA DESIGN | ሰያ ዲዛይን</h1>
       <p>📍 ጅማ መርካቶ፣ ንብ ባንክ አጠገብ (ቁጥር 35) • የሴቶች ፋሽን እና ዘመናዊ ስፌት</p>
     </div>
-    <div class="header-actions">
-      <a href="tel:0948964203" class="btn-call">📞 0948964203</a>
-    </div>
+    <a href="tel:0948964203" class="btn-call">📞 0948964203</a>
   </header>
 
   <div class="container">
 
-    <!-- 1. AI FASHION CONSULTANT FIRST (TOP) -->
+    <!-- 1. AI ASSISTANT FIRST -->
     <section class="ai-hero" id="ai-section">
       <div class="ai-header">
         <div class="ai-title">
           <span style="font-size:1.5rem;">👗</span>
           <div>
             <strong style="font-size:1rem;">የሰያ ዲዛይን AI ፋሽን አማካሪ</strong>
-            <div style="font-size:0.78rem; color:var(--muted);">ጽሑፍ ይጻፉ፣ የልብስ ፎቶ ይላኩ (📷) ወይም በድምጽ ይጠይቁ (🎤)</div>
+            <div style="font-size:0.76rem; color:var(--muted);">ጽሑፍ ይጻፉ፣ የልብስ ፎቶ ይላኩ (📷) ወይም በድምጽ ይጠይቁ (🎤)</div>
           </div>
         </div>
         <span class="ai-badge">● ቀጥታ (Live)</span>
@@ -362,7 +384,7 @@
       <div class="quick-chips">
         <button class="chip" onclick="quickAsk('የሰርግ እና የድግስ ቀሚስ የስፌት ዋጋ ስንት ነው?')">💍 የሰርግ ቀሚስ ዋጋ</button>
         <button class="chip" onclick="quickAsk('ዘመናዊ አባያ እና ሺፎን ትሰፋላችሁ?')">🧕 አባያ እና ሺፎን</button>
-        <button class="chip" onclick="quickAsk('የሴቶች ሱፍ እና ሱሪ በልኬት ስንት ቀን ይፈጃል?')">🧥 የሴቶች ሱፍ እና ሱሪ</button>
+        <button class="chip" onclick="quickAsk('የሴቶች ሱፍ እና ሱሪ በልኬት ስንት ቀን ይፈጃል?')">🧥 የሴቶች ሱፍ</button>
         <button class="chip" onclick="quickAsk('ልኬት ለመስጠት ቀጠሮ መያዝ እፈልጋለሁ')">📅 ቀጠሮ ለመያዝ</button>
       </div>
 
@@ -381,68 +403,22 @@
       </form>
     </section>
 
-    <!-- 2. MULTI-OPTION SERVICES & CATEGORIES -->
-    <div class="section-title">🛍️ አገልግሎቶቻችን እና ባለ ብዙ አማራጮች</div>
-    <div class="grid-options">
-      <div class="option-card" onclick="selectService('የሰርግ እና የድግስ ቀሚስ ስፌት')">
-        <span class="emoji">👗</span>
-        <h3>የሰርግ እና ድግስ ቀሚስ</h3>
-        <p>በልኬትዎ የሚሰፉ ልዩ ዘመናዊ የሰርግና የምሽት ቀሚሶች</p>
-      </div>
-      <div class="option-card" onclick="selectService('ዘመናዊ አባያ እና ሺፎን')">
-        <span class="emoji">🧕</span>
-        <h3>አባያ እና ሺፎን</h3>
-        <p>ጥራት ባላቸው ጨርቆች የሚዘጋጁ ቄንጠኛ አባያዎች</p>
-      </div>
-      <div class="option-card" onclick="selectService('የሴቶች ሱፍ እና ሱሪ')">
-        <span class="emoji">🧥</span>
-        <h3>የሴቶች ሱፍ እና ሱሪ</h3>
-        <p>ለቢሮ እና ለፕሮግራም የሚሆኑ ሙሉ ሱፎችና ሱሪዎች</p>
-      </div>
-      <div class="option-card" onclick="document.getElementById('imageInput').click()">
-        <span class="emoji">📸</span>
-        <h3>የራስዎን ዲዛይን ይላኩ</h3>
-        <p>የወደዱትን ሞዴል ፎቶ እዚህ ያስቀምጡና ዋጋውን ይጠይቁ</p>
+    <!-- 2. DYNAMIC DESIGN GALLERY WITH CATEGORIES -->
+    <div class="section-header">
+      <div class="section-title">🖼️ የዲዛይን ምርጫዎች እና ስራዎቻችን</div>
+      <div class="cat-tabs">
+        <button class="cat-tab active" onclick="filterGallery('all', this)">ሁሉም</button>
+        <button class="cat-tab" onclick="filterGallery('wedding', this)">👗 የሰርግ እና ድግስ</button>
+        <button class="cat-tab" onclick="filterGallery('abaya', this)">🧕 አባያ እና ሺፎን</button>
+        <button class="cat-tab" onclick="filterGallery('suit', this)">🧥 የሴቶች ሱፍ</button>
       </div>
     </div>
+    <div class="gallery-grid" id="galleryGrid"></div>
 
-    <!-- 3. DESIGN SHOWCASE / GALLERY -->
-    <div class="section-title">🖼️ የዲዛይን ምርጫዎች (Style Showcase)</div>
-    <div class="gallery-grid">
-      <div class="style-card">
-        <div class="style-banner" style="background: linear-gradient(135deg, #4c1d95, #831843);">👑</div>
-        <div class="style-body">
-          <div>
-            <h4>ልዩ የሰርግ እና የመልስ ቀሚስ</h4>
-            <p>በጥልፍ እና በዘመናዊ ዲዛይን ተውቦ በልኬት የሚሰራ</p>
-          </div>
-          <button class="btn-order" onclick="selectService('ልዩ የሰርግ እና የመልስ ቀሚስ ማዘዝ እፈልጋለሁ')">ይህንን ዲዛይን እዘዝ</button>
-        </div>
-      </div>
-      <div class="style-card">
-        <div class="style-banner" style="background: linear-gradient(135deg, #064e3b, #1e3a8a);">✨</div>
-        <div class="style-body">
-          <div>
-            <h4>የሺፎን እና የክሪፕ ዘመናዊ አባያ</h4>
-            <p>ምቹ፣ ቀላል እና ለማንኛውም አጋጣሚ የሚሆን ዲዛይን</p>
-          </div>
-          <button class="btn-order" onclick="selectService('የሺፎን እና የክሪፕ ዘመናዊ አባያ ማዘዝ እፈልጋለሁ')">ይህንን ዲዛይን እዘዝ</button>
-        </div>
-      </div>
-      <div class="style-card">
-        <div class="style-banner" style="background: linear-gradient(135deg, #78350f, #312e81);">💼</div>
-        <div class="style-body">
-          <div>
-            <h4>ክላሲክ የሴቶች ሙሉ ሱፍ</h4>
-            <p>በጥንቃቄ የተቆረጠ እና ሰውነት ላይ ቁጭ የሚል ስፌት</p>
-          </div>
-          <button class="btn-order" onclick="selectService('ክላሲክ የሴቶች ሙሉ ሱፍ ማዘዝ እፈልጋለሁ')">ይህንን ዲዛይን እዘዝ</button>
-        </div>
-      </div>
+    <!-- 3. QUICK ORDER & APPOINTMENT -->
+    <div class="section-header">
+      <div class="section-title">📋 ቀጥታ ትዕዛዝ እና ቀጠሮ መያዣ</div>
     </div>
-
-    <!-- 4. QUICK ORDER & APPOINTMENT FORM -->
-    <div class="section-title">📋 ቀጥታ ትዕዛዝ እና ቀጠሮ መያዣ</div>
     <div class="order-panel">
       <div class="form-grid">
         <input type="text" id="custName" class="form-control" placeholder="ሙሉ ስምዎ" />
@@ -457,13 +433,22 @@
       <button type="button" class="btn-submit" onclick="submitQuickOrder()">✅ ትዕዛዝ / ቀጠሮ በቀጥታ ላክ</button>
     </div>
 
-    <!-- 5. SHOP INFO -->
     <div class="info-bar">
       <div>📍 <b>አድራሻ:</b> ጅማ መርካቶ፣ ንብ ባንክ አጠገብ (ቁጥር 35)</div>
       <div>📞 <b>ስልክ:</b> 0948964203</div>
       <div>⏰ <b>የስራ ሰዓት:</b> ሰኞ - ቅዳሜ (2:00 - 12:30)</div>
     </div>
+  </div>
 
+  <!-- Full Image Modal -->
+  <div class="modal" id="imgModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-content">
+      <img id="modalImg" src="" alt="Design" />
+      <div class="modal-footer">
+        <div id="modalTitle" style="font-size:0.9rem; font-weight:600;"></div>
+        <button class="btn-order" id="modalOrderBtn">ይህንን እዘዝ</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -474,10 +459,12 @@
     const previewImg = document.getElementById('previewImg');
     const previewText = document.getElementById('previewText');
     const micBtn = document.getElementById('micBtn');
+    const galleryGrid = document.getElementById('galleryGrid');
 
     let history = [];
-    let selectedImage = null; // { mimeType, data, url }
-    let recordedAudio = null; // { mimeType, data }
+    let allGallery = [];
+    let selectedImage = null;
+    let recordedAudio = null;
     let mediaRecorder = null;
     let audioChunks = [];
     const vid = localStorage.getItem('seya_vid') || ('v_' + Math.random().toString(36).slice(2, 10));
@@ -493,12 +480,77 @@
         div.appendChild(img);
       }
       const span = document.createElement('span');
-      span.innerHTML = text.replace(/\n/g, '<br>');
+      span.innerHTML = (role === 'owner' ? '👨‍🎨 <b>ከሰያ ዲዛይን ባለቤት (ቀጥታ መልስ):</b>\n' : '') + text.replace(/\n/g, '<br>');
       div.appendChild(span);
       chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
       return div;
     }
+
+    // Load Gallery from Server (including photos uploaded via Telegram!)
+    async function loadGallery() {
+      try {
+        const r = await fetch('/api/gallery');
+        allGallery = await r.json();
+        renderGallery('all');
+      } catch (e) {}
+    }
+
+    function filterGallery(cat, btn) {
+      document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderGallery(cat);
+    }
+
+    function renderGallery(cat) {
+      const items = cat === 'all' ? allGallery : allGallery.filter(i => i.category === cat);
+      galleryGrid.innerHTML = items.map(item => `
+        <div class="style-card">
+          ${item.image
+            ? `<img src="${item.image}" class="style-img" alt="${item.title}" onclick="openModal('${item.id}')" />`
+            : `<div class="style-banner">${item.emoji || '👗'}</div>`
+          }
+          <div class="style-body">
+            <div>
+              <h4>${item.title}</h4>
+              <p>${item.desc}</p>
+            </div>
+            <button class="btn-order" onclick="orderDesign('${item.title.replace(/'/g, '')}')">ይህንን ዲዛይን እዘዝ</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openModal(id) {
+      const item = allGallery.find(i => i.id === id);
+      if (!item || !item.image) return;
+      document.getElementById('modalImg').src = item.image;
+      document.getElementById('modalTitle').textContent = item.title;
+      document.getElementById('modalOrderBtn').onclick = () => {
+        document.getElementById('imgModal').style.display = 'none';
+        orderDesign(item.title);
+      };
+      document.getElementById('imgModal').style.display = 'flex';
+    }
+
+    function orderDesign(title) {
+      document.getElementById('ai-section').scrollIntoView({ behavior: 'smooth' });
+      quickAsk(`ይህንን ዲዛይን "${title}" ማዘዝ እፈልጋለሁ፤ ዋጋው እና የስፌት ጊዜው ስንት ነው?`);
+    }
+
+    // Poll for direct Live Replies from Owner via Telegram!
+    setInterval(async () => {
+      try {
+        const r = await fetch('/api/live-replies?vid=' + encodeURIComponent(vid));
+        const msgs = await r.json();
+        if (Array.isArray(msgs) && msgs.length > 0) {
+          msgs.forEach(m => {
+            appendMsg('owner', m);
+            history.push({ role: 'model', text: m });
+          });
+        }
+      } catch (e) {}
+    }, 3500);
 
     function handleImageSelect(e) {
       const file = e.target.files[0];
@@ -510,7 +562,7 @@
         recordedAudio = null;
         previewImg.src = reader.result;
         previewImg.style.display = 'block';
-        previewText.textContent = '📷 ፎቶ ተመርጧል — መልእክት ጽፈው ወይም ቀጥታ "ላክ" ይጫኑ';
+        previewText.textContent = '📷 ፎቶ ተመርጧል — መልእክት ጽፈው ወይም "ላክ" ይጫኑ';
         mediaPreview.style.display = 'flex';
         document.getElementById('ai-section').scrollIntoView({ behavior: 'smooth' });
       };
@@ -536,7 +588,7 @@
             recordedAudio = { mimeType: 'audio/webm', data: reader.result.split(',')[1] };
             selectedImage = null;
             previewImg.style.display = 'none';
-            previewText.textContent = '🎤 የድምጽ መልእክት ተቀድቷል — ለመላክ "ላክ" የሚለውን ይጫኑ';
+            previewText.textContent = '🎤 የድምጽ መልእክት ተቀድቷል — ለመላክ "ላክ" ይጫኑ';
             mediaPreview.style.display = 'flex';
           };
           reader.readAsDataURL(blob);
@@ -558,11 +610,6 @@
     function quickAsk(text) {
       promptInput.value = text;
       sendMessage();
-    }
-
-    function selectService(serviceText) {
-      document.getElementById('ai-section').scrollIntoView({ behavior: 'smooth' });
-      quickAsk('ስለ "' + serviceText + '" ዝርዝር መረጃ እና የዋጋ ሁኔታ ንገረኝ');
     }
 
     function submitQuickOrder() {
@@ -620,6 +667,8 @@
         sendBtn.disabled = false;
       }
     }
+
+    loadGallery();
   </script>
 </body>
 </html>

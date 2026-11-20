@@ -175,7 +175,56 @@ async function pollTelegramLive() {
         if (processedIds.size > 500) processedIds.clear();
 
         const msg = u.message;
-        if (!msg || !msg.text || String(msg.chat.id) !== String(ADMIN_ID)) continue;
+        if (!msg || String(msg.chat.id) !== String(ADMIN_ID)) continue;
+
+        // ሀ) ባለቤቱ ፎቶ ወደ ቴሌግራም ቦት ሲልክ -> ቀጥታ ወደ ዌብሳይቱ ጋለሪ መስቀል!
+        if (msg.photo && Array.isArray(msg.photo) && msg.photo.length > 0) {
+          try {
+            const bestPhoto = msg.photo[msg.photo.length - 1];
+            const fInfoRes = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getFile?file_id=${bestPhoto.file_id}`);
+            const fInfo = await fInfoRes.json();
+            if (fInfo.ok && fInfo.result.file_path) {
+              const imgRes = await fetch(`https://api.telegram.org/file/bot${TG_TOKEN}/${fInfo.result.file_path}`);
+              const buf = Buffer.from(await imgRes.arrayBuffer());
+              const b64Img = 'data:image/jpeg;base64,' + buf.toString('base64');
+              const cap = (msg.caption || 'አዲስ የሰያ ዲዛይን ስራ').trim();
+              let cat = 'wedding';
+              if (/አባያ|ሺፎን|abaya|chiffon/i.test(cap)) cat = 'abaya';
+              else if (/ሱፍ|ሱሪ|suit|trouser/i.test(cap)) cat = 'suit';
+
+              const gallery = JSON.parse(fs.readFileSync(GALLERY_FILE, 'utf8'));
+              gallery.unshift({
+                id: 'g_' + Date.now(),
+                category: cat,
+                title: cap.split('\n')[0].slice(0, 60),
+                desc: cap,
+                emoji: '✨',
+                image: b64Img
+              });
+              fs.writeFileSync(GALLERY_FILE, JSON.stringify(gallery.slice(0, 24)));
+              await sendToAdmin(`📸 <b>ፎቶው በቀጥታ ዌብሳይቱ ላይ ተሰቅሏል!</b>\n\n🏷️ <b>ርዕስ:</b> ${cap}\n📂 <b>ምድብ:</b> ${cat === 'wedding' ? 'የሰርግ እና ድግስ' : cat === 'abaya' ? 'አባያ እና ሺፎን' : 'የሴቶች ሱፍ'}\n\nአሁን ደንበኞች ዌብሳይቱ ላይ ገብተው ፎቶውን ማየት እና ማዘዝ ይችላሉ! (/clear_photos ለማጥፋት)`);
+            }
+          } catch (err) {
+            await sendToAdmin('⚠️ ፎቶውን መስቀል አልተቻለም: ' + err.message);
+          }
+          continue;
+        }
+
+        // ለ) ባለቤቱ የደንበኛውን መልእክት Reply ሲያደርግ -> በቀጥታ (Live) ዌብሳይቱ ላይ ላለው ደንበኛ መላክ!
+        if (msg.reply_to_message && msg.reply_to_message.text && msg.text) {
+          const idMatch = msg.reply_to_message.text.match(/🆔 ID:\s*([a-zA-Z0-9_.-]+)/);
+          if (idMatch && idMatch[1]) {
+            const targetVid = idMatch[1];
+            const allReplies = JSON.parse(fs.readFileSync(REPLIES_FILE, 'utf8'));
+            if (!allReplies[targetVid]) allReplies[targetVid] = [];
+            allReplies[targetVid].push(msg.text.trim());
+            fs.writeFileSync(REPLIES_FILE, JSON.stringify(allReplies));
+            await sendToAdmin(`✅ መልስዎ በቀጥታ (Live) ዌብሳይቱ ላይ ላለው ደንበኛ ተልኳል!\n💬 "${msg.text.trim()}"`);
+            continue;
+          }
+        }
+
+        if (!msg.text) continue;
         const txt = msg.text.trim();
 
         fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendChatAction`, {
@@ -192,7 +241,12 @@ async function pollTelegramLive() {
             : 'ℹ️ አሁን ላይ ተጨማሪ አዲስ መረጃ የለም (ዌብሳይቱ በኦሪጅናል መረጃው እየሰራ ነው)።');
         } else if (txt === '/chats') {
           await sendToAdmin('📊 በዌብሳይቱ ላይ የተጠየቁ የመጨረሻዎቹ 5 ጥያቄዎች፦\n\n' + getRecentWebChats());
-        } else if (txt === '/clear') {
+        } else if (txt === '/clear_photos') {
+          fs.writeFileSync(GALLERY_FILE, '[]');
+          await sendToAdmin('🗑️ ዌብሳይቱ ላይ የተሰቀሉት ፎቶዎች ተሰርዘዋል።');
+          continue;
+        }
+        if (txt === '/clear') {
           global.LIVE_UPDATES = '';
           adminChatHistory = [];
           if (fs.existsSync(EXTRA_FILE)) fs.unlinkSync(EXTRA_FILE);
@@ -248,6 +302,38 @@ ${getRecentWebChats()}
 initTelegramBridge();
 // ----------------------------------------------------
 
+
+const GALLERY_FILE = 'gallery.json';
+const REPLIES_FILE = 'live_replies.json';
+if (!fs.existsSync(GALLERY_FILE)) {
+  fs.writeFileSync(GALLERY_FILE, JSON.stringify([
+    { id: 'g1', category: 'wedding', title: 'ልዩ የሰርግ እና የመልስ ቀሚስ', desc: 'በጥልፍ እና በዘመናዊ ዲዛይን ተውቦ በልኬት የሚሰራ', emoji: '👑', image: '' },
+    { id: 'g2', category: 'abaya', title: 'የሺፎን እና የክሪፕ ዘመናዊ አባያ', desc: 'ምቹ፣ ቀላል እና ለማንኛውም አጋጣሚ የሚሆን ዲዛይን', emoji: '✨', image: '' },
+    { id: 'g3', category: 'suit', title: 'ክላሲክ የሴቶች ሙሉ ሱፍ', desc: 'በጥንቃቄ የተቆረጠ እና ሰውነት ላይ ቁጭ የሚል ስፌት', emoji: '💼', image: '' }
+  ], null, 2));
+}
+if (!fs.existsSync(REPLIES_FILE)) fs.writeFileSync(REPLIES_FILE, '{}');
+
+app.get('/api/gallery', (req, res) => {
+  try {
+    res.json(JSON.parse(fs.readFileSync(GALLERY_FILE, 'utf8')));
+  } catch (e) { res.json([]); }
+});
+
+app.get('/api/live-replies', (req, res) => {
+  const vid = String(req.query.vid || '');
+  if (!vid) return res.json([]);
+  try {
+    const all = JSON.parse(fs.readFileSync(REPLIES_FILE, 'utf8'));
+    const msgs = all[vid] || [];
+    if (msgs.length > 0) {
+      all[vid] = [];
+      fs.writeFileSync(REPLIES_FILE, JSON.stringify(all));
+    }
+    res.json(msgs);
+  } catch (e) { res.json([]); }
+});
+
 app.get('/api/info', (req, res) => res.json({ name: NAME, tagline: TAGLINE }));
 
 app.post('/api/chat', async (req, res) => {
@@ -292,7 +378,7 @@ app.post('/api/chat', async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: ADMIN_ID,
-          text: `${header}\n\n❓ ደንበኛ: ${logQ}\n\n🤖 የዌብሳይቱ መልስ: ${reply.slice(0, 900)}`
+          text: `${header}\n🆔 ID: ${String(req.body.vid || ip).slice(0, 20)}\n\n❓ ደንበኛ: ${logQ}\n\n🤖 የዌብሳይቱ መልስ: ${reply.slice(0, 800)}\n\n💡 (ለዚህ ደንበኛ በቀጥታ ለመመለስ ይህንን መልእክት Reply አድርገው ይጻፉ)`
         })
       }).catch(err => console.error('Telegram error:', err.message));
 
