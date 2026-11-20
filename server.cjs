@@ -90,30 +90,33 @@ function tidy(txt) {
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function callAI(contents, customSystem) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`;
+  const models = Array.from(new Set([GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'].filter(Boolean)));
   let last;
-  for (let i = 0; i < 3; i++) {
-    try {
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(25000),
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: customSystem || (SYSTEM + (global.LIVE_UPDATES ? "\n\n[ወቅታዊና አዲስ መመሪያ ከሱቁ ባለቤት - ይህንን ቅድሚያ ሰጥተህ ተግብር]:\n" + global.LIVE_UPDATES : "")) }] },
-          contents
-        })
-      });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        const err = new Error(d.error?.message || 'Gemini ' + r.status);
-        err.status = r.status;
-        throw err;
+  for (const m of models) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${GEMINI_KEY}`;
+    for (let i = 0; i < 2; i++) {
+      try {
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(25000),
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: customSystem || (SYSTEM + (global.LIVE_UPDATES ? "\n\n[ወቅታዊና አዲስ መመሪያ ከሱቁ ባለቤት - ይህንን ቅድሚያ ሰጥተህ ተግብር]:\n" + global.LIVE_UPDATES : "")) }] },
+            contents
+          })
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          const err = new Error(d.error?.message || 'Gemini ' + r.status);
+          err.status = r.status;
+          throw err;
+        }
+        return d.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || 'ይቅርታ፣ ምላሽ ማግኘት አልተቻለም።';
+      } catch (e) {
+        last = e;
+        if (e.status === 429 || e.status === 503) await sleep(1000 * (i + 1));
+        else break;
       }
-      return d.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || 'ይቅርታ፣ ምላሽ ማግኘት አልተቻለም።';
-    } catch (e) {
-      last = e;
-      if (e.status === 429 || e.status === 503) await sleep(1500 * (i + 1));
-      else break;
     }
   }
   throw last;
@@ -177,33 +180,43 @@ async function pollTelegramLive() {
         const msg = u.message;
         if (!msg || String(msg.chat.id) !== String(ADMIN_ID)) continue;
 
-        // ሀ) ባለቤቱ ፎቶ ወደ ቴሌግራም ቦት ሲልክ -> ቀጥታ ወደ ዌብሳይቱ ጋለሪ መስቀል!
+        // ሀ) ባለቤቱ ፎቶ ወደ ቴሌግራም ቦት ሲልክ -> ግልጽ ምድብ ውስጥ መስቀል!
         if (msg.photo && Array.isArray(msg.photo) && msg.photo.length > 0) {
           try {
             const bestPhoto = msg.photo[msg.photo.length - 1];
-            const fInfoRes = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getFile?file_id=${bestPhoto.file_id}`);
-            const fInfo = await fInfoRes.json();
-            if (fInfo.ok && fInfo.result.file_path) {
-              const imgRes = await fetch(`https://api.telegram.org/file/bot${TG_TOKEN}/${fInfo.result.file_path}`);
-              const buf = Buffer.from(await imgRes.arrayBuffer());
-              const b64Img = 'data:image/jpeg;base64,' + buf.toString('base64');
-              const cap = (msg.caption || 'አዲስ የሰያ ዲዛይን ስራ').trim();
-              let cat = 'wedding';
-              if (/አባያ|ሺፎን|abaya|chiffon/i.test(cap)) cat = 'abaya';
-              else if (/ሱፍ|ሱሪ|suit|trouser/i.test(cap)) cat = 'suit';
+            const rawCap = (msg.caption || '').trim();
+            let cat = 'wedding';
+            let catLabel = '👗 የሰርግ እና ድግስ (1)';
+            let cleanCap = rawCap;
 
-              const gallery = JSON.parse(fs.readFileSync(GALLERY_FILE, 'utf8'));
-              gallery.unshift({
-                id: 'g_' + Date.now(),
-                category: cat,
-                title: cap.split('\n')[0].slice(0, 60),
-                desc: cap,
-                emoji: '✨',
-                image: b64Img
-              });
-              fs.writeFileSync(GALLERY_FILE, JSON.stringify(gallery.slice(0, 24)));
-              await sendToAdmin(`📸 <b>ፎቶው በቀጥታ ዌብሳይቱ ላይ ተሰቅሏል!</b>\n\n🏷️ <b>ርዕስ:</b> ${cap}\n📂 <b>ምድብ:</b> ${cat === 'wedding' ? 'የሰርግ እና ድግስ' : cat === 'abaya' ? 'አባያ እና ሺፎን' : 'የሴቶች ሱፍ'}\n\nአሁን ደንበኞች ዌብሳይቱ ላይ ገብተው ፎቶውን ማየት እና ማዘዝ ይችላሉ! (/clear_photos ለማጥፋት)`);
+            if (/^2\b|አባያ|ሺፎን|abaya|chiffon/i.test(rawCap)) {
+              cat = 'abaya';
+              catLabel = '🧕 አባያ እና ሺፎን (2)';
+              cleanCap = rawCap.replace(/^2[\s.:-]*/, '').trim();
+            } else if (/^3\b|ሱፍ|ሱሪ|suit|trouser/i.test(rawCap)) {
+              cat = 'suit';
+              catLabel = '🧥 የሴቶች ሱፍ (3)';
+              cleanCap = rawCap.replace(/^3[\s.:-]*/, '').trim();
+            } else {
+              cat = 'wedding';
+              catLabel = '👗 የሰርግ እና ድግስ (1)';
+              cleanCap = rawCap.replace(/^1[\s.:-]*/, '').trim();
             }
+            if (!cleanCap) cleanCap = 'አዲስ የሰያ ዲዛይን ስራ';
+
+            const gallery = JSON.parse(fs.readFileSync(GALLERY_FILE, 'utf8'));
+            gallery.unshift({
+              id: 'g_' + Date.now(),
+              category: cat,
+              title: cleanCap.split('\n')[0].slice(0, 60),
+              desc: cleanCap,
+              emoji: '✨',
+              image: '/api/tg-img/' + bestPhoto.file_id
+            });
+            fs.writeFileSync(GALLERY_FILE, JSON.stringify(gallery.slice(0, 30), null, 2));
+            const posInCat = gallery.filter(i => i.category === cat).findIndex(i => i.image.includes(bestPhoto.file_id)) + 1;
+
+            await sendToAdmin(`✅ <b>ፎቶው በትክክል ዌብሳይቱ ላይ ተለጥፏል!</b>\n\n📂 <b>የተቀመጠበት ቦታ:</b> ${catLabel} ጋለሪ ውስጥ (#${posInCat})\n🏷️ <b>ርዕስ:</b> ${cleanCap}\n\n💡 <i>ማሳሰቢያ፡ ሌላ ፎቶ ሲልኩ ከስሩ 1 (ለሰርግ)፣ 2 (ለአባያ) ወይም 3 (ለሱፍ) ብለው ቢጽፉ በቀጥታ እዛው ጋለሪ ውስጥ ያስቀምጠዋል።</i>\n📋 የተለጠፉ ፎቶዎችን ለማየት /photos ይላኩ።`);
           } catch (err) {
             await sendToAdmin('⚠️ ፎቶውን መስቀል አልተቻለም: ' + err.message);
           }
@@ -241,7 +254,26 @@ async function pollTelegramLive() {
             : 'ℹ️ አሁን ላይ ተጨማሪ አዲስ መረጃ የለም (ዌብሳይቱ በኦሪጅናል መረጃው እየሰራ ነው)።');
         } else if (txt === '/chats') {
           await sendToAdmin('📊 በዌብሳይቱ ላይ የተጠየቁ የመጨረሻዎቹ 5 ጥያቄዎች፦\n\n' + getRecentWebChats());
-        } else if (txt === '/clear_photos') {
+        } else if (txt === '/photos') {
+          const g = JSON.parse(fs.readFileSync(GALLERY_FILE, 'utf8'));
+          if (!g.length) { await sendToAdmin('ℹ️ ጋለሪው ውስጥ የተለጠፈ ፎቶ የለም።'); continue; }
+          const list = g.map((item, idx) => `${idx + 1}. [${item.category === 'wedding' ? '1-ሰርግ' : item.category === 'abaya' ? '2-አባያ' : '3-ሱፍ'}] ${item.title}`).join('\n');
+          await sendToAdmin(`🖼️ <b>ዌብሳይቱ ላይ የተለጠፉ ፎቶዎች:</b>\n\n${list}\n\n🗑️ አንዱን ለማጥፋት /del 1 (ቁጥሩን) ይላኩ።`);
+          continue;
+        }
+        if (/^\/del\s+(\d+)$/.test(txt)) {
+          const idx = parseInt(txt.match(/^\/del\s+(\d+)$/)[1], 10) - 1;
+          const g = JSON.parse(fs.readFileSync(GALLERY_FILE, 'utf8'));
+          if (g[idx]) {
+            const removed = g.splice(idx, 1)[0];
+            fs.writeFileSync(GALLERY_FILE, JSON.stringify(g, null, 2));
+            await sendToAdmin(`🗑️ "${removed.title}" ከዌብሳይቱ ጋለሪ ተሰርዟል።`);
+          } else {
+            await sendToAdmin('⚠️ ትክክለኛ ቁጥር ያስገቡ (ለምሳሌ /del 1)');
+          }
+          continue;
+        }
+        if (txt === '/clear_photos') {
           fs.writeFileSync(GALLERY_FILE, '[]');
           await sendToAdmin('🗑️ ዌብሳይቱ ላይ የተሰቀሉት ፎቶዎች ተሰርዘዋል።');
           continue;
@@ -313,6 +345,20 @@ if (!fs.existsSync(GALLERY_FILE)) {
   ], null, 2));
 }
 if (!fs.existsSync(REPLIES_FILE)) fs.writeFileSync(REPLIES_FILE, '{}');
+
+
+app.get('/api/tg-img/:fileId', async (req, res) => {
+  try {
+    const fInfoRes = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getFile?file_id=${encodeURIComponent(req.params.fileId)}`);
+    const fInfo = await fInfoRes.json();
+    if (!fInfo.ok || !fInfo.result.file_path) return res.status(404).end();
+    const imgRes = await fetch(`https://api.telegram.org/file/bot${TG_TOKEN}/${fInfo.result.file_path}`);
+    res.setHeader('Content-Type', imgRes.headers.get('content-type') || 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    const buf = Buffer.from(await imgRes.arrayBuffer());
+    res.send(buf);
+  } catch (e) { res.status(500).end(); }
+});
 
 app.get('/api/gallery', (req, res) => {
   try {
@@ -481,3 +527,6 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log('http://localhost:' + PORT + ' | ' + NAME + ' | Gemini ' + GEMINI_MODEL);
 });
+
+// Keep Render Awake
+setInterval(() => { fetch('https://seya-design-mmgv.onrender.com/api/info').catch(() => {}); }, 600000);
