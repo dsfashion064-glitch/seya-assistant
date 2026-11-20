@@ -51,16 +51,16 @@
       font-weight: 600;
     }
 
-    .container { max-width: 840px; margin: 0 auto; padding: 14px; }
+    .container { max-width: 860px; margin: 0 auto; padding: 14px; }
 
-    /* 1. AI ASSISTANT SECTION FIRST */
+    /* 1. AI ASSISTANT FIRST */
     .ai-hero {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 16px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-      margin-bottom: 22px;
+      margin-bottom: 24px;
     }
     .ai-header {
       display: flex;
@@ -80,7 +80,7 @@
       border: 1px solid rgba(34, 197, 94, 0.3);
     }
     .chat-box {
-      height: 300px;
+      height: 290px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -207,7 +207,7 @@
       flex-shrink: 0;
     }
 
-    /* 2. GALLERY & CATEGORY FILTER */
+    /* 2. FULL-IMAGE GALLERY CARDS (ሙሉ ፎቶ ሳይቆረጥ) */
     .section-header {
       display: flex;
       justify-content: space-between;
@@ -236,8 +236,8 @@
 
     .gallery-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
     }
     .style-card {
       background: var(--card);
@@ -247,19 +247,28 @@
       display: flex;
       flex-direction: column;
     }
-    .style-img {
+    /* ፎቶው ግማሽ ግማሽ ሳይቆረጥ ሙሉ ቁመቱ እንዲታይ */
+    .style-img-box {
       width: 100%;
-      height: 210px;
-      object-fit: cover;
-      display: block;
-      cursor: pointer;
-    }
-    .style-banner {
-      height: 120px;
+      background: #080a10;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.6rem;
+      cursor: pointer;
+    }
+    .style-img {
+      width: 100%;
+      height: auto;
+      max-height: 420px;
+      object-fit: contain;
+      display: block;
+    }
+    .style-banner {
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
       background: linear-gradient(135deg, #4c1d95, #831843);
     }
     .style-body { padding: 14px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
@@ -278,26 +287,76 @@
     }
     .btn-order:hover { background: var(--primary); color: #fff; }
 
+    /* MORE BUTTON -> OPENS FULL DEDICATED CATEGORY PAGE */
+    .more-page-bar {
+      text-align: center;
+      margin-top: 18px;
+    }
+    .btn-more-page {
+      background: linear-gradient(135deg, #1e263d, #2a1b3d);
+      border: 1px solid var(--primary);
+      color: #fff;
+      padding: 12px 26px;
+      border-radius: 99px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(217, 70, 239, 0.25);
+    }
+    .btn-more-page:hover { background: var(--primary); }
+
+    /* DEDICATED FULL-SCREEN CATEGORY CATALOG PAGE (ለየካታጎሪው ሙሉ ገጽ) */
+    .catalog-page {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 80;
+      overflow-y: auto;
+      padding-bottom: 50px;
+    }
+    .catalog-topbar {
+      position: sticky;
+      top: 0;
+      background: #131826;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 90;
+    }
+    .btn-back {
+      background: #1e263d;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     /* Lightbox Modal for full photo view */
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.88);
-      z-index: 100;
+      background: rgba(0,0,0,0.92);
+      z-index: 120;
       align-items: center;
       justify-content: center;
       padding: 16px;
     }
     .modal-content {
-      max-width: 500px;
+      max-width: 540px;
       width: 100%;
       background: var(--card);
       border-radius: 16px;
       overflow: hidden;
       border: 1px solid var(--border);
     }
-    .modal-content img { width: 100%; max-height: 65vh; object-fit: contain; background: #000; }
+    .modal-content img { width: 100%; max-height: 75vh; object-fit: contain; background: #000; }
     .modal-footer { padding: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 
     /* 3. QUICK ORDER & APPOINTMENT */
@@ -403,17 +462,24 @@
       </form>
     </section>
 
-    <!-- 2. DYNAMIC DESIGN GALLERY WITH CATEGORIES -->
+    <!-- 2. GALLERY PREVIEW WITH "MORE -> FULL PAGE" BUTTON -->
     <div class="section-header">
       <div class="section-title">🖼️ የዲዛይን ምርጫዎች እና ስራዎቻችን</div>
-      <div class="cat-tabs">
-        <button class="cat-tab active" onclick="filterGallery('all', this)">ሁሉም</button>
-        <button class="cat-tab" onclick="filterGallery('wedding', this)">👗 የሰርግ እና ድግስ</button>
-        <button class="cat-tab" onclick="filterGallery('abaya', this)">🧕 አባያ እና ሺፎን</button>
-        <button class="cat-tab" onclick="filterGallery('suit', this)">🧥 የሴቶች ሱፍ</button>
+      <div class="cat-tabs" id="catTabs">
+        <button class="cat-tab active" data-cat="all" onclick="filterGallery('all', this)">ሁሉም</button>
+        <button class="cat-tab" data-cat="wedding" onclick="filterGallery('wedding', this)">👗 የሰርግ እና ድግስ</button>
+        <button class="cat-tab" data-cat="abaya" onclick="filterGallery('abaya', this)">🧕 አባያ እና ሺፎን</button>
+        <button class="cat-tab" data-cat="suit" onclick="filterGallery('suit', this)">🧥 የሴቶች ሱፍ</button>
       </div>
     </div>
+
     <div class="gallery-grid" id="galleryGrid"></div>
+
+    <div class="more-page-bar">
+      <button type="button" class="btn-more-page" id="openMorePageBtn" onclick="openCatalogPage(currentCat)">
+        📂 More / ሁሉንም ፎቶዎች በሙሉ ገጽ እይ →
+      </button>
+    </div>
 
     <!-- 3. QUICK ORDER & APPOINTMENT -->
     <div class="section-header">
@@ -440,7 +506,25 @@
     </div>
   </div>
 
-  <!-- Full Image Modal -->
+  <!-- DEDICATED FULL-PAGE CATEGORY VIEW (More ሲነካ የሚከፈት ሙሉ ገጽ) -->
+  <div class="catalog-page" id="catalogPage">
+    <div class="catalog-topbar">
+      <button type="button" class="btn-back" onclick="closeCatalogPage()">← ተመለስ</button>
+      <strong id="catalogPageTitle" style="font-size:1rem;">ሁሉም ዲዛይኖች</strong>
+      <span id="catalogPageCount" style="font-size:0.8rem; color:var(--accent);"></span>
+    </div>
+    <div class="container">
+      <div class="cat-tabs" id="fullPageTabs" style="margin-bottom:16px;">
+        <button class="cat-tab" data-cat="all" onclick="openCatalogPage('all')">ሁሉም</button>
+        <button class="cat-tab" data-cat="wedding" onclick="openCatalogPage('wedding')">👗 የሰርግ እና ድግስ</button>
+        <button class="cat-tab" data-cat="abaya" onclick="openCatalogPage('abaya')">🧕 አባያ እና ሺፎን</button>
+        <button class="cat-tab" data-cat="suit" onclick="openCatalogPage('suit')">🧥 የሴቶች ሱፍ</button>
+      </div>
+      <div class="gallery-grid" id="fullCatalogGrid"></div>
+    </div>
+  </div>
+
+  <!-- Full Image Lightbox Modal -->
   <div class="modal" id="imgModal" onclick="if(event.target===this)this.style.display='none'">
     <div class="modal-content">
       <img id="modalImg" src="" alt="Design" />
@@ -460,9 +544,11 @@
     const previewText = document.getElementById('previewText');
     const micBtn = document.getElementById('micBtn');
     const galleryGrid = document.getElementById('galleryGrid');
+    const fullCatalogGrid = document.getElementById('fullCatalogGrid');
 
     let history = [];
     let allGallery = [];
+    let currentCat = 'all';
     let selectedImage = null;
     let recordedAudio = null;
     let mediaRecorder = null;
@@ -487,27 +573,11 @@
       return div;
     }
 
-    // Load Gallery from Server (including photos uploaded via Telegram!)
-    async function loadGallery() {
-      try {
-        const r = await fetch('/api/gallery');
-        allGallery = await r.json();
-        renderGallery('all');
-      } catch (e) {}
-    }
-
-    function filterGallery(cat, btn) {
-      document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      renderGallery(cat);
-    }
-
-    function renderGallery(cat) {
-      const items = cat === 'all' ? allGallery : allGallery.filter(i => i.category === cat);
-      galleryGrid.innerHTML = items.map(item => `
+    function cardTemplate(item) {
+      return `
         <div class="style-card">
           ${item.image
-            ? `<img src="${item.image}" class="style-img" alt="${item.title}" onclick="openModal('${item.id}')" />`
+            ? `<div class="style-img-box" onclick="openModal('${item.id}')"><img src="${item.image}" loading="lazy" class="style-img" alt="${item.title}" /></div>`
             : `<div class="style-banner">${item.emoji || '👗'}</div>`
           }
           <div class="style-body">
@@ -518,7 +588,77 @@
             <button class="btn-order" onclick="orderDesign('${item.title.replace(/'/g, '')}')">ይህንን ዲዛይን እዘዝ</button>
           </div>
         </div>
-      `).join('');
+      `;
+    }
+
+    async function loadGallery() {
+      try {
+        const r = await fetch('/api/gallery');
+        allGallery = await r.json();
+        updateTabCounts();
+        renderHomeGallery('all');
+      } catch (e) {}
+    }
+
+    function updateTabCounts() {
+      const wCount = allGallery.filter(i => i.category === 'wedding').length;
+      const aCount = allGallery.filter(i => i.category === 'abaya').length;
+      const sCount = allGallery.filter(i => i.category === 'suit').length;
+      const labels = [
+        `ሁሉም (${allGallery.length})`,
+        `👗 የሰርግ እና ድግስ (${wCount})`,
+        `🧕 አባያ እና ሺፎን (${aCount})`,
+        `🧥 የሴቶች ሱፍ (${sCount})`
+      ];
+      [document.querySelectorAll('#catTabs .cat-tab'), document.querySelectorAll('#fullPageTabs .cat-tab')].forEach(tabs => {
+        tabs.forEach((t, i) => { if (labels[i]) t.textContent = labels[i]; });
+      });
+    }
+
+    function filterGallery(cat, btn) {
+      currentCat = cat;
+      document.querySelectorAll('#catTabs .cat-tab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderHomeGallery(cat);
+    }
+
+    function renderHomeGallery(cat) {
+      const filtered = cat === 'all' ? allGallery : allGallery.filter(i => i.category === cat);
+      // ዋናው ገጽ ላይ 6 ፎቶዎችን በሙሉ ቁመት አሳይቶ፣ ቀሪዎቹን "More" ሲነካ በሙሉ ገጽ ይከፍታል
+      const previewItems = filtered.slice(0, 6);
+      galleryGrid.innerHTML = previewItems.map(cardTemplate).join('');
+
+      const moreBtn = document.getElementById('openMorePageBtn');
+      const catName = cat === 'wedding' ? 'የሰርግ እና ድግስ' : cat === 'abaya' ? 'አባያ እና ሺፎን' : cat === 'suit' ? 'የሴቶች ሱፍ' : 'ሁሉንም';
+      moreBtn.textContent = `📂 More / ${catName} ሙሉ ጋለሪ እይ (${filtered.length} ፎቶዎች) →`;
+    }
+
+    // Open Dedicated Full-Page Category View
+    function openCatalogPage(cat) {
+      const page = document.getElementById('catalogPage');
+      const filtered = cat === 'all' ? allGallery : allGallery.filter(i => i.category === cat);
+      const titles = {
+        all: '✨ ሁሉም የሰያ ዲዛይን ስራዎች',
+        wedding: '👗 የሰርግ እና ድግስ ቀሚሶች',
+        abaya: '🧕 ዘመናዊ አባያ እና ሺፎን',
+        suit: '🧥 የሴቶች ሱፍ እና ሱሪ'
+      };
+      document.getElementById('catalogPageTitle').textContent = titles[cat] || titles.all;
+      document.getElementById('catalogPageCount').textContent = `${filtered.length} ፎቶዎች`;
+
+      document.querySelectorAll('#fullPageTabs .cat-tab').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-cat') === cat);
+      });
+
+      fullCatalogGrid.innerHTML = filtered.map(cardTemplate).join('');
+      page.style.display = 'block';
+      page.scrollTop = 0;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCatalogPage() {
+      document.getElementById('catalogPage').style.display = 'none';
+      document.body.style.overflow = '';
     }
 
     function openModal(id) {
@@ -528,17 +668,18 @@
       document.getElementById('modalTitle').textContent = item.title;
       document.getElementById('modalOrderBtn').onclick = () => {
         document.getElementById('imgModal').style.display = 'none';
+        closeCatalogPage();
         orderDesign(item.title);
       };
       document.getElementById('imgModal').style.display = 'flex';
     }
 
     function orderDesign(title) {
+      closeCatalogPage();
       document.getElementById('ai-section').scrollIntoView({ behavior: 'smooth' });
       quickAsk(`ይህንን ዲዛይን "${title}" ማዘዝ እፈልጋለሁ፤ ዋጋው እና የስፌት ጊዜው ስንት ነው?`);
     }
 
-    // Poll for direct Live Replies from Owner via Telegram!
     setInterval(async () => {
       try {
         const r = await fetch('/api/live-replies?vid=' + encodeURIComponent(vid));

@@ -156,6 +156,7 @@ function getRecentWebChats() {
 }
 
 async function initTelegramBridge() {
+  await restoreGalleryFromTelegram();
   if (!TG_TOKEN || !ADMIN_ID) return;
   try {
     await fetch(`https://api.telegram.org/bot${TG_TOKEN}/deleteWebhook?drop_pending_updates=false`);
@@ -267,6 +268,7 @@ async function pollTelegramLive() {
           if (g[idx]) {
             const removed = g.splice(idx, 1)[0];
             fs.writeFileSync(GALLERY_FILE, JSON.stringify(g, null, 2));
+            backupGalleryToTelegram(g);
             await sendToAdmin(`🗑️ "${removed.title}" ከዌብሳይቱ ጋለሪ ተሰርዟል።`);
           } else {
             await sendToAdmin('⚠️ ትክክለኛ ቁጥር ያስገቡ (ለምሳሌ /del 1)');
@@ -346,6 +348,62 @@ if (!fs.existsSync(GALLERY_FILE)) {
 }
 if (!fs.existsSync(REPLIES_FILE)) fs.writeFileSync(REPLIES_FILE, '{}');
 
+
+
+async function backupGalleryToTelegram(galleryArr) {
+  if (!TG_TOKEN || !ADMIN_ID) return;
+  try {
+    const compact = galleryArr.map(g => ({
+      i: g.id,
+      c: g.category,
+      t: g.title,
+      d: g.desc,
+      f: g.image && g.image.startsWith('/api/tg-img/') ? g.image.replace('/api/tg-img/', '') : ''
+    })).filter(x => x.f);
+    const payload = '#SEYA_GALLERY_DB\n' + JSON.stringify(compact);
+    if (payload.length > 4000) return;
+    const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: ADMIN_ID, text: payload, disable_notification: true })
+    });
+    const d = await r.json();
+    if (d.ok && d.result?.message_id) {
+      await fetch(`https://api.telegram.org/bot${TG_TOKEN}/pinChatMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: ADMIN_ID, message_id: d.result.message_id, disable_notification: true })
+      });
+    }
+  } catch (e) {}
+}
+
+async function restoreGalleryFromTelegram() {
+  if (!TG_TOKEN || !ADMIN_ID) return;
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getChat?chat_id=${ADMIN_ID}`);
+    const d = await r.json();
+    const pinned = d.result?.pinned_message?.text || '';
+    if (pinned.startsWith('#SEYA_GALLERY_DB\n')) {
+      const compact = JSON.parse(pinned.replace('#SEYA_GALLERY_DB\n', ''));
+      if (Array.isArray(compact) && compact.length > 0) {
+        const current = JSON.parse(fs.readFileSync(GALLERY_FILE, 'utf8'));
+        const hasRealPhotos = current.some(x => x.image && x.image.startsWith('/api/tg-img/'));
+        if (!hasRealPhotos) {
+          const restored = compact.map(x => ({
+            id: x.i,
+            category: x.c,
+            title: x.t,
+            desc: x.d,
+            emoji: '✨',
+            image: '/api/tg-img/' + x.f
+          }));
+          fs.writeFileSync(GALLERY_FILE, JSON.stringify(restored, null, 2));
+        }
+      }
+    }
+  } catch (e) {}
+}
 
 app.get('/api/tg-img/:fileId', async (req, res) => {
   try {
