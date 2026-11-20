@@ -3,7 +3,7 @@ const express = require('express');
 const zlib = require('zlib');
 const fs = require('fs');
 const app = express();
-app.use(express.json({ limit: '50kb' }));
+app.use(express.json({ limit: '15mb' }));
 
 // --- በሁለቱ ነጠላ ጥቅሶች ('') መሃል ቶከንህን እና አይዲህን አስገባ ---
 const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8979276991:AAHL62vzkTZqtJmGXUWNhSLhy5icXx6dSSE";
@@ -254,27 +254,66 @@ app.post('/api/chat', async (req, res) => {
   try {
     const ip = req.headers['cf-connecting-ip'] || (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip;
     if (limited(ip)) return res.status(429).json({ error: 'ብዙ ጥያቄዎች ተልከዋል። ትንሽ ቆይተው ይሞክሩ።' });
-    const q = String(req.body.prompt || '').trim().slice(0, 2000);
-    if (!q) return res.status(400).json({ error: 'መልዕክት ባዶ ነው።' });
+
+    const rawQ = String(req.body.prompt || '').trim().slice(0, 2000);
+    const imgData = req.body.image && typeof req.body.image.data === 'string' ? req.body.image : null;
+    const audData = req.body.audio && typeof req.body.audio.data === 'string' ? req.body.audio : null;
+
+    if (!rawQ && !imgData && !audData) {
+      return res.status(400).json({ error: 'እባክዎ መልዕክት ይጻፉ፣ ፎቶ ይምረጡ ወይም ድምጽ ይቅዱ።' });
+    }
+
     const hist = Array.isArray(req.body.history) ? req.body.history.slice(-12) : [];
     const contents = hist
       .filter(h => h && (h.role === 'user' || h.role === 'model') && typeof h.text === 'string')
       .map(h => ({ role: h.role, parts: [{ text: h.text.slice(0, 2000) }] }));
-    contents.push({ role: 'user', parts: [{ text: q }] });
+
+    const userParts = [];
+    if (imgData) {
+      userParts.push({ inlineData: { mimeType: imgData.mimeType || 'image/jpeg', data: imgData.data } });
+    }
+    if (audData) {
+      userParts.push({ inlineData: { mimeType: audData.mimeType || 'audio/webm', data: audData.data } });
+    }
+    const textPrompt = rawQ || (imgData ? 'ደንበኛው ይህንን የዲዛይን/ልብስ ፎቶ ልኳል። ስለ ዲዛይኑ፣ ስለ ስፌቱ እና ስለ ዋጋ ግምቱ በሰያ ዲዛይን ስም አብራራለት።' : 'ደንበኛው የድምጽ መልእክት ልኳል። በጥሞና አዳምጠህ በአማርኛ ምላሽ ስጠው።');
+    userParts.push({ text: textPrompt });
+
+    contents.push({ role: 'user', parts: userParts });
     const reply = tidy(await callAI(contents));
-    fs.appendFile('chats.jsonl', JSON.stringify({ t: Date.now(), v: String(req.body.vid || ip).slice(0, 40), q, a: reply }) + '\n', () => {});
+
+    const logQ = (imgData ? '[📷 ፎቶ] ' : '') + (audData ? '[🎤 ድምጽ] ' : '') + (rawQ || '(ሚዲያ መልእክት)');
+    fs.appendFile('chats.jsonl', JSON.stringify({ t: Date.now(), v: String(req.body.vid || ip).slice(0, 40), q: logQ, a: reply }) + '\n', () => {});
 
     if (TG_TOKEN && ADMIN_ID) {
-      const hasPhone = /(?:\+?251|0)?[97]\d{8}/.test(q);
+      const hasPhone = /(?:\+?251|0)?[97]\d{8}/.test(rawQ);
       const header = hasPhone ? '🚨 📞 ደንበኛ ስልክ ቁጥር ልኳል! (SEYA DESIGN)' : '🔔 አዲስ የዌብሳይት ጥያቄ (SEYA DESIGN)';
       fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: ADMIN_ID,
-          text: `${header}\n\n❓ ደንበኛ: ${q}\n\n🤖 የዌብሳይቱ መልስ: ${reply.slice(0, 900)}`
+          text: `${header}\n\n❓ ደንበኛ: ${logQ}\n\n🤖 የዌብሳይቱ መልስ: ${reply.slice(0, 900)}`
         })
       }).catch(err => console.error('Telegram error:', err.message));
+
+      if (imgData) {
+        try {
+          const fd = new FormData();
+          fd.append('chat_id', ADMIN_ID);
+          fd.append('caption', '📷 ከዌብሳይት ደንበኛ የተላከ የዲዛይን ፎቶ' + (rawQ ? ': ' + rawQ : ''));
+          fd.append('photo', new Blob([Buffer.from(imgData.data, 'base64')], { type: imgData.mimeType || 'image/jpeg' }), 'design.jpg');
+          fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`, { method: 'POST', body: fd }).catch(() => {});
+        } catch (e) {}
+      }
+      if (audData) {
+        try {
+          const fd = new FormData();
+          fd.append('chat_id', ADMIN_ID);
+          fd.append('caption', '🎤 ከዌብሳይት ደንበኛ የተላከ የድምጽ መልእክት');
+          fd.append('voice', new Blob([Buffer.from(audData.data, 'base64')], { type: audData.mimeType || 'audio/ogg' }), 'voice.ogg');
+          fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendVoice`, { method: 'POST', body: fd }).catch(() => {});
+        } catch (e) {}
+      }
     }
 
     res.json({ reply });
