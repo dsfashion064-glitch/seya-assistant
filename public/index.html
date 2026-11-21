@@ -337,6 +337,29 @@
       cursor: pointer;
     }
 
+    
+    .gallery-wrapper {
+      max-height: 680px;
+      overflow-y: auto;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary) var(--bg);
+    }
+    .gallery-wrapper::-webkit-scrollbar { width: 6px; }
+    .gallery-wrapper::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 99px; }
+    .load-more-wrap { text-align: center; margin-top: 14px; }
+    .btn-load-more {
+      background: #1e263d;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 22px;
+      border-radius: 99px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-load-more:hover { border-color: var(--primary); color: #f472b6; }
+
     /* Lightbox Modal for full photo view */
     .modal {
       display: none;
@@ -464,7 +487,7 @@
 
     <!-- 2. GALLERY PREVIEW WITH "MORE -> FULL PAGE" BUTTON -->
     <div class="section-header">
-      <div class="section-title">🖼️ የዲዛይን ምርጫዎች እና ስራዎቻችን</div>
+      <div class="section-title">🖼️ የዲዛይን ምርጫዎች እና ስራዎቻችን <span id="totalCountBadge" style="font-size:0.82rem; color:var(--accent);"></span></div>
       <div class="cat-tabs" id="catTabs">
         <button class="cat-tab active" data-cat="all" onclick="filterGallery('all', this)">ሁሉም</button>
         <button class="cat-tab" data-cat="wedding" onclick="filterGallery('wedding', this)">👗 የሰርግ እና ድግስ</button>
@@ -472,8 +495,12 @@
         <button class="cat-tab" data-cat="suit" onclick="filterGallery('suit', this)">🧥 የሴቶች ሱፍ</button>
       </div>
     </div>
-
-    <div class="gallery-grid" id="galleryGrid"></div>
+    <div class="gallery-wrapper" id="galleryWrapper">
+      <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+    <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+      <button type="button" class="btn-load-more" id="loadMoreBtn" onclick="showMorePhotos()">⬇️ ተጨማሪ ፎቶዎችን አሳይ</button>
+    </div>
 
     <div class="more-page-bar">
       <button type="button" class="btn-more-page" id="openMorePageBtn" onclick="openCatalogPage(currentCat)">

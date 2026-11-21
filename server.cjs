@@ -211,7 +211,7 @@ async function pollTelegramLive() {
               emoji: '✨',
               image: '/api/tg-img/' + bestPhoto.file_id
             });
-            fs.writeFileSync(GALLERY_FILE, JSON.stringify(gallery.slice(0, 30), null, 2));
+            fs.writeFileSync(GALLERY_FILE, JSON.stringify(gallery.slice(0, 500), null, 2));
             const posInCat = gallery.filter(i => i.category === cat).findIndex(i => i.image.includes(bestPhoto.file_id)) + 1;
 
             await sendToAdmin(`✅ <b>ፎቶው በትክክል ዌብሳይቱ ላይ ተለጥፏል!</b>\n\n📂 <b>የተቀመጠበት ቦታ:</b> ${catLabel} ጋለሪ ውስጥ (#${posInCat})\n🏷️ <b>ርዕስ:</b> ${cleanCap}\n\n💡 <i>ማሳሰቢያ፡ ሌላ ፎቶ ሲልኩ ከስሩ 1 (ለሰርግ)፣ 2 (ለአባያ) ወይም 3 (ለሱፍ) ብለው ቢጽፉ በቀጥታ እዛው ጋለሪ ውስጥ ያስቀምጠዋል።</i>\n📋 የተለጠፉ ፎቶዎችን ለማየት /photos ይላኩ።`);
