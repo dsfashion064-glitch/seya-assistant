@@ -483,49 +483,53 @@ function loadUsmiHub() {
 
 
 
-app.post('/api/usmi-chat', express.json({ limit: '15mb' }), async (req, res) => {
-  try {
-    const body = req.body || {};
-    const q = String(body.prompt || '').trim().slice(0, 1500);
-    const image = body.image || null;
-    const audio = body.audio || null;
+app.get('/u/usmi-hub', (req, res) => {
+  res.redirect(302, '/u/usmi');
+});
 
-    if (!q && !image && !audio) {
-      return res.json({ reply: 'እባክዎ ጥያቄዎን ይጻፉ፣ ፎቶ ይላኩ ወይም በድምጽ ይጠይቁ።' });
+
+app.post('/api/usmi-chat', express.json({ limit: '2mb' }), async (req, res) => {
+  try {
+    const q = String((req.body && req.body.prompt) || '').trim().slice(0, 1500);
+    if (!q) {
+      return res.json({ reply: 'እባክዎ ጥያቄዎን እዚህ ይጻፉ።' });
     }
 
+    const h = (typeof loadUsmiHub === 'function') ? loadUsmiHub() : {};
+    const schoolName = h.schoolName || 'USMI FASHION SCHOOL';
+    const founder = h.founder || 'Designer Usmi';
+    const experience = h.experience || 'በፋሽን ዘርፍ 6 ዓመት ገደማ';
+    const tagline = h.tagline || 'DESIGN · CREATE · STITCH · INSPIRE';
+    const address = h.address || 'ጅማ መርካቶ፣ መቱማ ህንፃ';
+    const phone = h.phone || '+251901611067';
+    const telegram = h.telegram || '@Usmifashion1';
+    const instagram = h.instagram || '@usmi_fashion_school';
+    const tiktok1 = h.tiktok1 || '@usmi_fashion_school';
+    const tiktok2 = h.tiktok2 || '@usmi.design.new.fashoin';
+
     const backKnowledge = [
-      'ስም: USMI FASHION SCHOOL (ውዝሚ ፋሽን ስኩል)',
-      'መስራች: Designer Usmi',
-      'የልምድ ጊዜ: በፋሽን ዘርፍ 6 ዓመት ገደማ',
-      'መፈክር: DESIGN · CREATE · STITCH · INSPIRE',
-      'አድራሻ: ጅማ መርካቶ፣ መቱማ ህንፃ',
-      'ስልክ: +251901611067',
-      'Telegram: @Usmifashion1 (https://t.me/Usmifashion1)',
-      'Instagram: @usmi_fashion_school (https://www.instagram.com/usmi_fashion_school/)',
-      'TikTok: @usmi_fashion_school (https://www.tiktok.com/@usmi_fashion_school) እና @usmi.design.new.fashoin (https://www.tiktok.com/@usmi.design.new.fashoin)',
+      'ስም: ' + schoolName + ' (ውዝሚ ፋሽን ስኩል)',
+      'መስራች: ' + founder,
+      'የልምድ ጊዜ: ' + experience,
+      'መፈክር: ' + tagline,
+      'አድራሻ: ' + address,
+      'ስልክ: ' + phone,
+      'Telegram: ' + telegram,
+      'Instagram: ' + instagram,
+      'TikTok: ' + tiktok1 + ' እና ' + tiktok2,
       'ስልጠና ፕሮግራሞች: በተግባር የተደገፈ ስልጠና | የቀን፣ የማታ እና የቅዳሜና እሁድ ፕሮግራሞች አሉን!',
-      'የሚሰጡ ዋና ኮርሶች: የልብስ ቆረጣና ዘመናዊ ስፌት (Pattern Making & Garment Construction)፣ የሴቶችና የወንዶች ፋሽን ዲዛይን፣ የባህላዊ፣ የድግስ፣ የአባያ እና የሺፎን አልባሳት ስራ፣ የልኬት አወሳሰድና የጨርቅ ምርጫ፣ የአጨራረስ (Finishing) ጥበብ፣ እንዲሁም የተግባር ስልጠናና የቢዝነስ አጀማመር መመሪያ።'
+      'የሚሰጡ ዋና ኮርሶች: የልብስ ቆረጣና ዘመናዊ ስፌት፣ የሴቶችና የወንዶች ፋሽን ዲዛይን፣ የባህላዊ፣ የድግስ፣ የአባያ እና የሺፎን አልባሳት ስራ፣ የልኬት አወሳሰድና የጨርቅ ምርጫ፣ የአጨራረስ ጥበብ፣ እንዲሁም የተግባር ስልጠናና የቢዝነስ አጀማመር መመሪያ።'
     ].join('\n');
 
-    const sysPrompt = `አንተ የ USMI FASHION SCHOOL (DESIGN · CREATE · STITCH · INSPIRE) ኦፊሴላዊ AI አማካሪ ነህ።
-ከዚህ በታች ያለውን የጀርባ ዳታ መሰረት አድርገህ እና አናላይዝ በማድረግ፣ የራስህን ተጨማሪ ሀሳብ እየጨመርክ በትምህርት ቤቱ (ውዝሚ ፋሽን) እና በፋሽን ዙሪያ ጠቃሚ ሊሆን የሚችል ማንኛውንም መረጃ በአማርኛ በሰፊውና በግልጽ መልስ ስጥ። የዳታ ዝርዝርን ብቻ ከመድገም ይልቅ ተፈጥሯዊ፣ አማካሪ እና አበረታች ምላሽ ስጥ፤ አስፈላጊ ሆኖ ሲገኝ የመገናኛና የምዝገባ መንገዶችን (@Usmifashion1 ወይም +251901611067) በተፈጥሮ አካትት።
+    const sysPrompt = `አንተ የ ${schoolName} (${tagline}) ኦፊሴላዊ AI አማካሪ ነህ።
+ከዚህ በታች ያለውን የጀርባ ዳታ መሰረት አድርገህ እና አናላይዝ በማድረግ፣ የራስህን ተጨማሪ ሀሳብ እየጨመርክ በትምህርት ቤቱ (ውዝሚ ፋሽን) እና በፋሽን ዙሪያ ጠቃሚ ሊሆን የሚችል ማንኛውንም መረጃ በአማርኛ በሰፊውና በግልጽ መልስ ስጥ። የዳታ ዝርዝርን ብቻ ከመድገም ይልቅ ተፈጥሯዊ፣ አማካሪ እና አበረታች ምላሽ ስጥ፤ አስፈላጊ ሆኖ ሲገኝ የመገናኛና የምዝገባ መንገዶችን (${telegram} ወይም ${phone}) በተፈጥሮ አካትት።
 
 የጀርባ ዳታ፡-
 ${backKnowledge}`;
 
-    const userParts = [];
-    if (q) userParts.push({ text: q });
-    if (image && image.data && image.mimeType) {
-      userParts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
-      if (!q) userParts.push({ text: 'ይህንን የዲዛይን ፎቶ አናላይዝ አድርገህ በፋሽን እና በ USMI FASHION SCHOOL ዙሪያ አስተያየት ስጥ።' });
-    }
-    if (audio && audio.data && audio.mimeType) {
-      userParts.push({ inlineData: { mimeType: audio.mimeType, data: audio.data } });
-      if (!q) userParts.push({ text: 'የተላከውን የድምጽ ጥያቄ አዳምጥና በአማርኛ ተገቢውን ምላሽ ስጥ።' });
-    }
-
+    const userParts = [{ text: q }];
     let rawReply = '';
+
     if (typeof callAI === 'function') {
       try {
         rawReply = await callAI([{ role: 'user', parts: userParts }], sysPrompt);
@@ -562,16 +566,15 @@ ${backKnowledge}`;
     const reply = (typeof tidy === 'function') ? tidy(rawReply) : String(rawReply || '').trim();
     if (!reply) {
       return res.json({
-        reply: 'USMI FASHION SCHOOL (በ Designer Usmi የተመሰረተና የ6 ዓመት ገደማ ልምድ ያለው) በጅማ መርካቶ፣ መቱማ ህንፃ የሚገኝ በተግባር የተደገፈ የፋሽን ዲዛይንና የልብስ ስፌት ማዕከል ነው። የቀን፣ የማታ እና የቅዳሜና እሁድ ፕሮግራሞች አሉን። ለተጨማሪ መረጃ እና ምዝገባ በቴሌግራም @Usmifashion1 ወይም በስልክ +251901611067 ያናግሩን!'
+        reply: `${schoolName} (${tagline}) — መስራች ${founder} (${experience})፣ አድራሻ ${address}፣ ስልክ ${phone}፣ Telegram ${telegram}። የቀን፣ የማታ እና የቅዳሜና እሁድ የተግባር ስልጠናዎች አሉን። ለተጨማሪ መረጃ በ ${telegram} ወይም በ ${phone} ያናግሩን!`
       });
     }
 
     if (typeof TG_TOKEN !== 'undefined' && typeof ADMIN_ID !== 'undefined' && TG_TOKEN && ADMIN_ID) {
-      const logText = `🎓 USMI AI ጥያቄ: ${q || (image ? '[ፎቶ]' : '[ድምጽ]')}\n\n🤖 ምላሽ: ${reply.slice(0, 600)}`;
       fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: ADMIN_ID, text: logText })
+        body: JSON.stringify({ chat_id: ADMIN_ID, text: `🎓 USMI AI ጥያቄ: ${q}\n\n🤖 ምላሽ: ${reply.slice(0, 600)}` })
       }).catch(() => {});
     }
 
@@ -581,10 +584,6 @@ ${backKnowledge}`;
       reply: 'USMI FASHION SCHOOL (ጅማ መርካቶ፣ መቱማ ህንፃ) የቀን፣ የማታ እና የቅዳሜና እሁድ የተግባር ፋሽን ስልጠናዎችን ይሰጣል። ለዝርዝር መረጃ በ @Usmifashion1 ወይም በ +251901611067 ያግኙን።'
     });
   }
-});
-
-app.get('/u/usmi-hub', (req, res) => {
-  res.redirect(302, '/u/usmi');
 });
 
 app.get('/u/usmi', (req, res) => {
@@ -682,7 +681,7 @@ app.get('/u/usmi', (req, res) => {
     .ai-title { font-size: 1.05rem; font-weight: 700; color: #fbbf24; margin-bottom: 4px; }
     .ai-sub { font-size: 0.78rem; color: #94a3b8; margin-bottom: 12px; }
     .chat-log {
-      max-height: 250px;
+      max-height: 240px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -699,34 +698,8 @@ app.get('/u/usmi', (req, res) => {
     }
     .bubble.ai { background: #1a2238; border: 1px solid #2e3b5e; align-self: flex-start; max-width: 88%; }
     .bubble.me { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; align-self: flex-end; max-width: 85%; }
-    .bubble img.thumb { max-width: 150px; border-radius: 10px; display: block; margin-bottom: 6px; }
-    .media-bar {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      background: #182036;
-      padding: 6px 10px;
-      border-radius: 10px;
-      margin-bottom: 8px;
-      font-size: 0.8rem;
-    }
-    .media-bar img { width: 34px; height: 34px; object-fit: cover; border-radius: 6px; }
-    .media-bar button { margin-left: auto; background: #ef4444; color: #fff; border: none; border-radius: 6px; padding: 3px 8px; cursor: pointer; }
-    .chat-form { display: flex; gap: 6px; align-items: center; }
-    .m-btn {
-      background: #1a2238;
-      border: 1px solid #2e3b5e;
-      color: #fff;
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      font-size: 1rem;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    .m-btn.rec { background: #dc2626; animation: pulse 1s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-    .chat-form input[type="text"] {
+    .chat-form { display: flex; gap: 8px; }
+    .chat-form input {
       flex: 1;
       background: #0b0f1a;
       border: 1px solid #2b3554;
@@ -736,16 +709,14 @@ app.get('/u/usmi', (req, res) => {
       font-size: 0.9rem;
       outline: none;
     }
-    .chat-form button.send {
+    .chat-form button {
       background: #f59e0b;
       color: #090c14;
       border: none;
-      padding: 0 15px;
-      height: 38px;
+      padding: 0 16px;
       border-radius: 12px;
       font-weight: 800;
       cursor: pointer;
-      flex-shrink: 0;
     }
 
     .qr-mini { text-align: center; }
@@ -798,21 +769,13 @@ app.get('/u/usmi', (req, res) => {
 
     <div class="card">
       <div class="ai-title">🤖 USMI AI መረጃ እና ጥያቄ መልስ</div>
-      <div class="ai-sub">ስለ ውዝሚ ፋሽን፣ ኮርሶች፣ የጊዜ ሰሌዳ ወይም ምዝገባ በቀጥታ ይጠይቁ (ፎቶ ወይም ድምጽ መላክ ይቻላል)</div>
+      <div class="ai-sub">ስለ ስልጠና ፕሮግራሞች፣ የጊዜ ሰሌዳ ወይም ምዝገባ በቀጥታ ይጠይቁ</div>
       <div class="chat-log" id="usmiChatLog">
-        <div class="bubble ai">ሰላም! ወደ <b>${schoolName}</b> እንኳን በደህና መጡ። ስለ ውዝሚ ፋሽን፣ ስለሚሰጡ ኮርሶች፣ ስለ ቀን/ማታ/ቅዳሜና እሁድ ፕሮግራሞች ወይም ስለ ምዝገባ ማንኛውንም ጥያቄ መጠየቅ ይችላሉ!</div>
-      </div>
-      <div class="media-bar" id="usmiMediaBar">
-        <img id="usmiPrevImg" src="" alt="" style="display:none;" />
-        <span id="usmiPrevTxt"></span>
-        <button type="button" onclick="clearUsmiMedia()">✕</button>
+        <div class="bubble ai">ሰላም! ወደ <b>${schoolName}</b> እንኳን በደህና መጡ። ስለ ስልጠናዎቻችን፣ ስለ ቀን/ማታ/ቅዳሜና እሁድ ፕሮግራሞች ወይም ስለ ምዝገባ ማንኛውንም ጥያቄ መጠየቅ ይችላሉ!</div>
       </div>
       <form class="chat-form" onsubmit="askUsmiAi(event)">
-        <input type="file" id="usmiImgInput" accept="image/*" style="display:none;" onchange="pickUsmiImg(event)" />
-        <button type="button" class="m-btn" onclick="document.getElementById('usmiImgInput').click()">📷</button>
-        <button type="button" class="m-btn" id="usmiMicBtn" onclick="recUsmiAudio()">🎤</button>
-        <input type="text" id="usmiInput" placeholder="ጥያቄዎን እዚህ ይጻፉ..." />
-        <button type="submit" class="send" id="usmiSend">ጠይቅ</button>
+        <input type="text" id="usmiInput" placeholder="ጥያቄዎን እዚህ ይጻፉ..." required />
+        <button type="submit" id="usmiSend">ጠይቅ</button>
       </form>
     </div>
 
@@ -823,119 +786,40 @@ app.get('/u/usmi', (req, res) => {
   </div>
 
   <script>
-    let usmiImg = null, usmiAud = null, uRec = null, uChunks = [], uMime = 'audio/webm';
-
-    function appendBubble(cls, text, imgSrc) {
-      const log = document.getElementById('usmiChatLog');
-      const div = document.createElement('div');
-      div.className = 'bubble ' + cls;
-      if (imgSrc) {
-        const im = document.createElement('img');
-        im.src = imgSrc;
-        im.className = 'thumb';
-        div.appendChild(im);
-      }
-      const sp = document.createElement('span');
-      sp.innerHTML = String(text || '').replace(/\n/g, '<br>');
-      div.appendChild(sp);
-      log.appendChild(div);
-      log.scrollTop = log.scrollHeight;
-      return div;
-    }
-
-    function pickUsmiImg(e) {
-      const f = e.target.files[0];
-      if (!f) return;
-      const r = new FileReader();
-      r.onload = () => {
-        usmiImg = { mimeType: f.type || 'image/jpeg', data: r.result.split(',')[1], url: r.result };
-        usmiAud = null;
-        document.getElementById('usmiPrevImg').src = r.result;
-        document.getElementById('usmiPrevImg').style.display = 'block';
-        document.getElementById('usmiPrevTxt').textContent = '📷 ፎቶ ተመርጧል';
-        document.getElementById('usmiMediaBar').style.display = 'flex';
-      };
-      r.readAsDataURL(f);
-    }
-
-    async function recUsmiAudio() {
-      const btn = document.getElementById('usmiMicBtn');
-      if (uRec && uRec.state === 'recording') {
-        uRec.stop();
-        btn.classList.remove('rec');
-        return;
-      }
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('ይህ ብራውዘር ማይክሮፎን አይደግፍም። በ Chrome ይክፈቱ።');
-        return;
-      }
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        uChunks = [];
-        const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
-        uMime = types.find(t => typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || 'audio/webm';
-        uRec = new MediaRecorder(stream, uMime && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(uMime) ? { mimeType: uMime } : undefined);
-        uRec.ondataavailable = ev => { if (ev.data && ev.data.size > 0) uChunks.push(ev.data); };
-        uRec.onstop = () => {
-          stream.getTracks().forEach(t => t.stop());
-          const cleanMime = (uRec.mimeType || uMime || 'audio/webm').split(';')[0];
-          const blob = new Blob(uChunks, { type: cleanMime });
-          if (!blob.size) return;
-          const r = new FileReader();
-          r.onload = () => {
-            usmiAud = { mimeType: cleanMime, data: r.result.split(',')[1] };
-            usmiImg = null;
-            document.getElementById('usmiPrevImg').style.display = 'none';
-            document.getElementById('usmiPrevTxt').textContent = '🎤 ድምጽ ተቀድቷል (ላክን ይጫኑ)';
-            document.getElementById('usmiMediaBar').style.display = 'flex';
-          };
-          r.readAsDataURL(blob);
-        };
-        uRec.start(200);
-        btn.classList.add('rec');
-      } catch (err) {
-        alert('ማይክሮፎን ፈቃድ ይስጡ ወይም በ Chrome ብራውዘር ይሞክሩ።');
-      }
-    }
-
-    function clearUsmiMedia() {
-      usmiImg = null;
-      usmiAud = null;
-      document.getElementById('usmiImgInput').value = '';
-      document.getElementById('usmiMediaBar').style.display = 'none';
-    }
-
     async function askUsmiAi(e) {
       e.preventDefault();
       const inp = document.getElementById('usmiInput');
       const btn = document.getElementById('usmiSend');
+      const log = document.getElementById('usmiChatLog');
       const q = inp.value.trim();
-      if (!q && !usmiImg && !usmiAud) return;
+      if (!q) return;
 
-      appendBubble('me', q || (usmiImg ? '📷 ፎቶ ተልኳል' : '🎤 ድምጽ ተልኳል'), usmiImg ? usmiImg.url : null);
-      const payload = {
-        prompt: q,
-        image: usmiImg ? { mimeType: usmiImg.mimeType, data: usmiImg.data } : null,
-        audio: usmiAud ? { mimeType: usmiAud.mimeType, data: usmiAud.data } : null
-      };
+      const me = document.createElement('div');
+      me.className = 'bubble me';
+      me.textContent = q;
+      log.appendChild(me);
       inp.value = '';
-      clearUsmiMedia();
       btn.disabled = true;
-      const wait = appendBubble('ai', '⏳ ምላሽ በማዘጋጀት ላይ...');
+
+      const wait = document.createElement('div');
+      wait.className = 'bubble ai';
+      wait.textContent = '⏳ ምላሽ በማዘጋጀት ላይ...';
+      log.appendChild(wait);
+      log.scrollTop = log.scrollHeight;
 
       try {
         const r = await fetch('/api/usmi-chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ prompt: q })
         });
         const d = await r.json();
-        wait.innerHTML = String(d.reply || d.error || 'ምላሽ ማግኘት አልተቻለም።').replace(/\n/g, '<br>');
+        wait.textContent = d.reply || d.error || 'ምላሽ ማግኘት አልተቻለም።';
       } catch (err) {
         wait.textContent = 'የኢንተርኔት ግንኙነት ችግር አጋጥሟል።';
       } finally {
         btn.disabled = false;
-        document.getElementById('usmiChatLog').scrollTop = document.getElementById('usmiChatLog').scrollHeight;
+        log.scrollTop = log.scrollHeight;
       }
     }
   </script>
