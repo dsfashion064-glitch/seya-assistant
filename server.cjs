@@ -867,6 +867,89 @@ app.get('/icon/:size.png', (req, res) => {
 
 app.use(express.static('public'));
 const PORT = process.env.PORT || 3000;
+
+const QR_CONFIG_FILE = 'qr_config.json';
+const QR_USERS_FILE = 'qr_users.json';
+
+function getQrConfig() {
+  try {
+    if (fs.existsSync(QR_CONFIG_FILE)) {
+      return JSON.parse(fs.readFileSync(QR_CONFIG_FILE, 'utf8'));
+    }
+  } catch (e) {}
+  return {
+    title: 'SEYA DESIGN | ሰያ ዲዛይን',
+    url: 'https://seya-design-mmgv.onrender.com',
+    note: 'ጅማ መርካቶ፣ ቁጥር 35 • 0948964203'
+  };
+}
+
+function saveQrConfig(cfg) {
+  fs.writeFileSync(QR_CONFIG_FILE, JSON.stringify(cfg, null, 2));
+}
+
+function loadQrUsers() {
+  try {
+    if (fs.existsSync(QR_USERS_FILE)) {
+      return JSON.parse(fs.readFileSync(QR_USERS_FILE, 'utf8'));
+    }
+  } catch (e) {}
+  return {};
+}
+
+function saveQrUsers(data) {
+  fs.writeFileSync(QR_USERS_FILE, JSON.stringify(data, null, 2));
+}
+
+function resolveQrTarget(req) {
+  const id = String(req.query.id || '').trim().toLowerCase();
+  if (id === 'usmi') {
+    return {
+      id: 'usmi',
+      title: 'USMI FASHION SCHOOL',
+      url: 'https://seya-design-mmgv.onrender.com/u/usmi',
+      note: 'USMI Digital Hub'
+    };
+  }
+  if (id) {
+    const users = loadQrUsers();
+    if (users[id]) {
+      return {
+        id,
+        title: users[id].title || id,
+        url: users[id].url,
+        note: users[id].note || ''
+      };
+    }
+  }
+  const cfg = getQrConfig();
+  return { id: 'default', title: cfg.title, url: cfg.url, note: cfg.note };
+}
+
+app.get('/api/qr-info', (req, res) => {
+  const target = resolveQrTarget(req);
+  const customUrl = String(req.query.url || '').trim();
+  const activeUrl = customUrl || target.url;
+  const qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=340x340&margin=12&data=' + encodeURIComponent(activeUrl);
+  res.json({ ...target, activeUrl, qrImageUrl });
+});
+
+app.get('/api/qr.png', async (req, res) => {
+  try {
+    const target = resolveQrTarget(req);
+    const customUrl = String(req.query.url || '').trim();
+    const activeUrl = customUrl || target.url;
+    const apiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=14&data=' + encodeURIComponent(activeUrl);
+    const r = await fetch(apiUrl);
+    const buf = Buffer.from(await r.arrayBuffer());
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(buf);
+  } catch (e) {
+    res.status(500).send('QR error');
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log('http://localhost:' + PORT + ' | ' + NAME + ' | Gemini ' + GEMINI_MODEL);
 });
