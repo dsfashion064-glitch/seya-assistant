@@ -868,6 +868,8 @@ app.get('/icon/:size.png', (req, res) => {
 app.use(express.static('public'));
 const PORT = process.env.PORT || 3000;
 
+
+
 const QR_CONFIG_FILE = 'qr_config.json';
 const QR_USERS_FILE = 'qr_users.json';
 
