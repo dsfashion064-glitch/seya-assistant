@@ -481,6 +481,7 @@ function loadUsmiHub() {
 }
 
 
+
 app.post('/api/usmi-chat', async (req, res) => {
   try {
     const q = String(req.body.prompt || '').trim().slice(0, 1500);
@@ -490,73 +491,77 @@ app.post('/api/usmi-chat', async (req, res) => {
       return res.json({ reply: 'እባክዎ ጥያቄዎን ይጻፉ፣ ፎቶ ይላኩ ወይም በድምጽ ይጠይቁ።' });
     }
 
-    const h = (typeof loadUsmiHub === 'function') ? loadUsmiHub() : {};
-    const schoolName = h.schoolName || 'USMI FASHION SCHOOL';
-    const founder = h.founder || 'Designer Usmi';
-    const experience = h.experience || 'በፋሽን ዘርፍ 6 ዓመት ገደማ';
-    const tagline = h.tagline || 'DESIGN · CREATE · STITCH · INSPIRE';
-    const address = h.address || 'ጅማ መርካቶ፣ መቱማ ህንፃ';
-    const phone = h.phone || '+251901611067';
-    const telegram = h.telegram || '@Usmifashion1';
-    const instagram = h.instagram || '@usmi_fashion_school';
-    const tiktok1 = h.tiktok1 || '@usmi_fashion_school';
-    const tiktok2 = h.tiktok2 || '@usmi.design.new.fashoin';
+    const backData = [
+      'ስም: USMI FASHION SCHOOL (ውዝሚ ፋሽን ስኩል)',
+      'መስራች: Designer Usmi',
+      'የልምድ ጊዜ: በፋሽን ዘርፍ 6 ዓመት ገደማ',
+      'መፈክር: DESIGN · CREATE · STITCH · INSPIRE',
+      'አድራሻ: ጅማ መርካቶ፣ መቱማ ህንፃ',
+      'ስልክ: +251901611067',
+      'Telegram: @Usmifashion1 (https://t.me/Usmifashion1)',
+      'Instagram: @usmi_fashion_school (https://www.instagram.com/usmi_fashion_school/)',
+      'TikTok: @usmi_fashion_school (https://www.tiktok.com/@usmi_fashion_school) እና @usmi.design.new.fashoin (https://www.tiktok.com/@usmi.design.new.fashoin)',
+      'ስልጠና ፕሮግራሞች: በተግባር የተደገፈ ስልጠና | የቀን፣ የማታ እና የቅዳሜና እሁድ ፕሮግራሞች አሉን!',
+      'የሚሰጡ ዋና ኮርሶች: የልብስ ቆረጣና ዘመናዊ ስፌት (Pattern Making & Garment Construction)፣ የሴቶችና የወንዶች ፋሽን ዲዛይን፣ የባህላዊ/የድግስ/የአባያ/የሺፎን አልባሳት ስራ፣ የልኬት አወሳሰድና የጨርቅ ምርጫ፣ የአጨራረስ (Finishing) ጥበብ፣ እንዲሁም የተግባር ስልጠናና የቢዝነስ አጀማመር መመሪያ።'
+    ].join('\n');
 
-    const sysPrompt = `አንተ የ ${schoolName} (${tagline}) ኦፊሴላዊ AI አማካሪ ነህ።
-ስለ ውዝሚ ፋሽን (USMI FASHION SCHOOL)፣ ስለ አጠቃላይ የፋሽን ዓለም፣ ስለ ትምህርት ቤቱ እና ስለሚሰጡ ኮርሶች ሲጠየቅ ቀጥሎ ያለውን መረጃ እንደ ዋና መሰረት ወስደህ የራስህን ተጨማሪ ሙያዊ ማብራሪያ ጨምረህ በአማርኛ መልስ ስጥ፡-
+    const sysPrompt = `አንተ የ USMI FASHION SCHOOL (DESIGN · CREATE · STITCH · INSPIRE) AI አማካሪ ነህ።
+ከዚህ በታች ያለውን የጀርባ ዳታ መሰረት አድርገህ እና አናላይዝ በማድረግ፣ የራስህን ተጨማሪ ሀሳብ እየጨመርክ በትምህርት ቤቱ (ውዝሚ ፋሽን) እና በፋሽን ዙሪያ ጠቃሚ ሊሆን የሚችል ማንኛውንም መረጃ በአማርኛ በሰፊውና በግልጽ መልስ ስጥ። በቀጥታ የዳታ ዝርዝር ብቻ ከመድገም ይልቅ ተፈጥሯዊ፣ አማካሪ እና አበረታች መልስ ስጥ፤ አስፈላጊ ሆኖ ሲገኝ የምዝገባና የመገናኛ መንገዶችን (@Usmifashion1 ወይም +251901611067) በተፈጥሮ አካትት።
 
-የትምህርት ቤቱ መረጃዎች፡-
-- ስም፦ ${schoolName}
-- መስራች፦ ${founder}
-- የልምድ ጊዜ፦ ${experience}
-- መፈክር፦ ${tagline}
-- አድራሻ፦ ${address}
-- ስልክ፦ ${phone}
-- Telegram፦ ${telegram}
-- Instagram፦ ${instagram}
-- TikTok፦ ${tiktok1} እና ${tiktok2}
-- ፕሮግራሞች፦ በተግባር የተደገፈ ስልጠና | የቀን፣ የማታ እና የቅዳሜና እሁድ ፕሮግራሞች አሉን!
-
-የሚሰጡ ኮርሶች፡-
-1. የልብስ ቆረጣ እና ዘመናዊ ስፌት
-2. የሴቶች እና የወንዶች ፋሽን ዲዛይን
-3. የባህላዊ፣ የድግስ፣ የአባያ እና የሺፎን አልባሳት ስራ
-4. የልኬት አወሳሰድ፣ የጨርቅ ምርጫ እና የአጨራረስ ጥበብ
-5. በተግባር የተደገፈ የስራ ዝግጅት እና የቢዝነስ አጀማመር መመሪያ
-
-ውዝሚ ፋሽን ምን እንደሆነ፣ የሚሰጡ ኮርሶችን እና የራስህን የፋሽንና የስልጠና ሀሳቦች በግልጽና በሚያጓጓ አማርኛ አብራራ። ለምዝገባ ወይም ለተጨማሪ መረጃ በቴሌግራም ${telegram} ወይም በስልክ ${phone} እንዲያናግሩ ጠቁም።`;
+የጀርባ ዳታ፡-
+${backData}`;
 
     const userParts = [];
     if (q) userParts.push({ text: q });
     if (image && image.data && image.mimeType) {
       userParts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
-      if (!q) userParts.push({ text: 'ይህንን የዲዛይን ፎቶ ተመልክተህ ስለ ዲዛይኑ እና ስለ USMI FASHION SCHOOL መልስ ስጥ።' });
+      if (!q) userParts.push({ text: 'ይህንን የዲዛይን ፎቶ አናላይዝ አድርገህ በፋሽን እና በ USMI FASHION SCHOOL ዙሪያ አስተያየት ስጥ።' });
     }
     if (audio && audio.data && audio.mimeType) {
       userParts.push({ inlineData: { mimeType: audio.mimeType, data: audio.data } });
-      if (!q) userParts.push({ text: 'የተላከውን የድምጽ ጥያቄ አዳምጥና በአማርኛ መልስ ስጥ።' });
+      if (!q) userParts.push({ text: 'የተላከውን የድምጽ ጥያቄ አዳምጥና በአማርኛ ተገቢውን ምላሽ ስጥ።' });
     }
 
     let rawReply = '';
     if (typeof callAI === 'function') {
-      rawReply = await callAI([{ role: 'user', parts: userParts }], sysPrompt);
-    } else if (process.env.GEMINI_API_KEY) {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
-      const gr = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: sysPrompt }] },
-          contents: [{ role: 'user', parts: userParts }]
-        })
-      });
-      const gj = await gr.json();
-      rawReply = gj?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      try {
+        rawReply = await callAI([{ role: 'user', parts: userParts }], sysPrompt);
+      } catch (err) {
+        rawReply = '';
+      }
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
+    if (!rawReply && apiKey) {
+      const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      for (const m of models) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+          const gr = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: sysPrompt }] },
+              contents: [{ role: 'user', parts: userParts }]
+            })
+          });
+          if (gr.ok) {
+            const gj = await gr.json();
+            const txtOut = gj?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (txtOut.trim()) {
+              rawReply = txtOut.trim();
+              break;
+            }
+          }
+        } catch (e2) {}
+      }
     }
 
     const reply = (typeof tidy === 'function') ? tidy(rawReply) : String(rawReply || '').trim();
     if (!reply) {
-      return res.json({ reply: `ሰላም! ${schoolName} (${tagline}) — መስራች ${founder} (${experience})፣ አድራሻ ${address}፣ ስልክ ${phone}፣ Telegram ${telegram}። የቀን፣ የማታ እና የቅዳሜና እሁድ የተግባር ስልጠናዎች አሉን። ለተጨማሪ መረጃ በ ${telegram} ወይም በ ${phone} ያናግሩን!` });
+      return res.json({
+        reply: 'USMI FASHION SCHOOL (በ Designer Usmi የተመሰረተና የ6 ዓመት ገደማ ልምድ ያለው) በጅማ መርካቶ፣ መቱማ ህንፃ የሚገኝ በተግባር የተደገፈ የፋሽን ዲዛይንና የልብስ ስፌት ማዕከል ነው። የቀን፣ የማታ እና የቅዳሜና እሁድ ፕሮግራሞች አሉን። ለተጨማሪ መረጃ እና ምዝገባ በቴሌግራም @Usmifashion1 ወይም በስልክ +251901611067 ያናግሩን!'
+      });
     }
 
     if (typeof TG_TOKEN !== 'undefined' && typeof ADMIN_ID !== 'undefined' && TG_TOKEN && ADMIN_ID) {
@@ -570,7 +575,9 @@ app.post('/api/usmi-chat', async (req, res) => {
 
     res.json({ reply });
   } catch (e) {
-    res.json({ reply: 'ሰላም! ስለ USMI FASHION SCHOOL መረጃ ለማግኘት በቴሌግራም @Usmifashion1 ወይም በስልክ +251901611067 ያናግሩን። አድራሻ: ጅማ መርካቶ፣ መቱማ ህንፃ።' });
+    res.json({
+      reply: 'USMI FASHION SCHOOL (ጅማ መርካቶ፣ መቱማ ህንፃ) የቀን፣ የማታ እና የቅዳሜና እሁድ የተግባር ፋሽን ስልጠናዎችን ይሰጣል። ለዝርዝር መረጃ በ @Usmifashion1 ወይም በ +251901611067 ያግኙን።'
+    });
   }
 });
 
