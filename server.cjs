@@ -435,6 +435,294 @@ app.get('/api/live-replies', (req, res) => {
   } catch (e) { res.json([]); }
 });
 
+
+const USMI_HUB_FILE = 'usmi_hub.json';
+function loadUsmiHub() {
+  try {
+    if (fs.existsSync(USMI_HUB_FILE)) {
+      return JSON.parse(fs.readFileSync(USMI_HUB_FILE, 'utf8'));
+    }
+  } catch (e) {}
+  return {
+    schoolName: 'USMI FASHION SCHOOL',
+    tagline: 'DESIGN • CREATE • STITCH • INSPIRE',
+    about: 'በተግባር የተደገፈ ስልጠና | የቀን፣ የማታ እና የቅዳሜና እሁድ ፕሮግራሞች አሉን!',
+    tiktok1: '@usmi_fashion_school',
+    tiktok1Url: 'https://www.tiktok.com/@usmi_fashion_school',
+    tiktok2: '@usmi.design.new.fashoin',
+    tiktok2Url: 'https://www.tiktok.com/@usmi.design.new.fashoin',
+    telegram: '@Usmifashion1',
+    telegramUrl: 'https://t.me/Usmifashion1',
+    phone: '+251901611067',
+    extraLinks: []
+  };
+}
+function saveUsmiHub(d) {
+  fs.writeFileSync(USMI_HUB_FILE, JSON.stringify(d, null, 2));
+}
+
+app.post('/api/usmi-chat', async (req, res) => {
+  try {
+    const q = String(req.body.prompt || '').trim().slice(0, 1500);
+    if (!q) return res.status(400).json({ error: 'እባክዎ ጥያቄዎን ይጻፉ።' });
+    const h = loadUsmiHub();
+    const sysPrompt = `አንተ የ ${h.schoolName} (${h.tagline}) ኦፊሴላዊ ዲጂታል AI አማካሪ ነህ።
+ስለ ትምህርት ቤቱ ዋና መረጃዎች፡
+- ${h.about}
+- በተግባር የተደገፈ ስልጠና | የቀን፣ የማታ እና የቅዳሜና እሁድ ፕሮግራሞች አሉን።
+- የትምህርት ቤታችን ቲክቶክ፡ ${h.tiktok1} (${h.tiktok1Url})
+- አዳዲስ ዲዛይኖቻችን በቲክቶክ፡ ${h.tiktok2} (${h.tiktok2Url})
+- በቴሌግራም ያናግሩን / ይመዝገቡ፡ ${h.telegram} (${h.telegramUrl})
+- ስልክ፡ ${h.phone}
+
+በአማርኛ ግልጽ፣ አበረታች እና ዝርዝር መልስ ስጥ። ምዝገባ ወይም ተጨማሪ መረጃ ቢፈልጉ በቴሌግራም ${h.telegram} ወይም በስልክ ${h.phone} እንዲያናግሩ ጠቁም።`;
+
+    const reply = tidy(await callAI([{ role: 'user', parts: [{ text: q }] }], sysPrompt));
+    if (TG_TOKEN && ADMIN_ID) {
+      fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: ADMIN_ID, text: `🎓 USMI AI ጥያቄ: ${q}\n\n🤖 ምላሽ: ${reply.slice(0, 700)}` })
+      }).catch(() => {});
+    }
+    res.json({ reply });
+  } catch (e) {
+    res.status(500).json({ error: 'ለጊዜው ምላሽ መስጠት አልተቻለም። እንደገና ይሞክሩ።' });
+  }
+});
+
+app.get('/u/usmi', (req, res) => {
+  const h = loadUsmiHub();
+  const extraHtml = (h.extraLinks || []).map(x =>
+    `<a class="link-btn" href="${x.url}" target="_blank" rel="noopener"><div>🔗 ${x.label}</div><span class="sub">ክፈት →</span></a>`
+  ).join('');
+
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${h.schoolName} | Official Digital Hub</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body {
+      background: #090c14;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 20px 14px 50px;
+    }
+    .wrap { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 16px; }
+    .card {
+      background: #121726;
+      border: 1px solid #2b3554;
+      border-radius: 22px;
+      padding: 22px 18px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    }
+    .hero-top { text-align: center; }
+    .logo-badge {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b, #b45309);
+      color: #090c14;
+      font-weight: 900;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #fde68a;
+    }
+    h1 { font-size: 1.38rem; color: #fbbf24; letter-spacing: 0.5px; }
+    .tagline { font-size: 0.74rem; color: #94a3b8; letter-spacing: 1.2px; margin: 5px 0 14px; }
+
+    .promo-box {
+      background: #0d1220;
+      border: 1px solid #242e4a;
+      border-radius: 16px;
+      padding: 15px;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      color: #e2e8f0;
+      margin-bottom: 16px;
+    }
+    .promo-highlight {
+      color: #fbbf24;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .links { display: flex; flex-direction: column; gap: 10px; }
+    .link-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #1a2238;
+      border: 1px solid #2e3b5e;
+      color: #f8fafc;
+      padding: 13px 15px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .link-btn:hover { border-color: #f59e0b; background: #222c47; }
+    .link-btn span.sub { font-size: 0.78rem; color: #fbbf24; font-weight: 500; }
+
+    .ai-title { font-size: 1.05rem; font-weight: 700; color: #fbbf24; margin-bottom: 4px; }
+    .ai-sub { font-size: 0.78rem; color: #94a3b8; margin-bottom: 12px; }
+    .chat-log {
+      max-height: 240px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-right: 4px;
+    }
+    .bubble {
+      padding: 10px 13px;
+      border-radius: 13px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .bubble.ai { background: #1a2238; border: 1px solid #2e3b5e; align-self: flex-start; max-width: 88%; }
+    .bubble.me { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; align-self: flex-end; max-width: 85%; }
+    .chat-form { display: flex; gap: 8px; }
+    .chat-form input {
+      flex: 1;
+      background: #0b0f1a;
+      border: 1px solid #2b3554;
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .chat-form button {
+      background: #f59e0b;
+      color: #090c14;
+      border: none;
+      padding: 0 16px;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .qr-mini { text-align: center; }
+    .qr-mini img {
+      width: 124px;
+      height: 124px;
+      background: #fff;
+      padding: 6px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+    .qr-mini p { font-size: 0.76rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="hero-top">
+        <div class="logo-badge">USMI</div>
+        <h1>${h.schoolName}</h1>
+        <div class="tagline">${h.tagline}</div>
+      </div>
+
+      <div class="promo-box">
+        <span class="promo-highlight">✨ የፈጠራና የፋሽን ስልጠና ማዕከል!</span>
+        📍 <b>በተግባር የተደገፈ ስልጠና</b> | የቀን፣ የማታ እና የቅዳሜና እሁድ ፕሮግራሞች አሉን!<br/>
+        በዘመናዊ የፋሽን ዲዛይን፣ በልብስ ቆረጣና ስፌት፣ እንዲሁም በተግባር ስራ ላይ ያተኮረ ጥራት ያለው ስልጠና እንሰጣለን። ለጀማሪዎችም ሆነ ክህሎታቸውን ማሳደግ ለሚፈልጉ ምቹ መርሃ ግብሮች አሉን።
+      </div>
+
+      <div class="links">
+        <a class="link-btn" href="${h.tiktok1Url}" target="_blank" rel="noopener">
+          <div>🎓 የትምህርት ቤታችን ቲክቶክ</div>
+          <span class="sub">${h.tiktok1}</span>
+        </a>
+        <a class="link-btn" href="${h.tiktok2Url}" target="_blank" rel="noopener">
+          <div>👗 አዳዲስ ዲዛይኖቻችን በቲክቶክ</div>
+          <span class="sub">${h.tiktok2}</span>
+        </a>
+        <a class="link-btn" href="${h.telegramUrl}" target="_blank" rel="noopener">
+          <div>💬 በቴሌግራም ያናግሩን / ይመዝገቡ</div>
+          <span class="sub">${h.telegram}</span>
+        </a>
+        <a class="link-btn" href="tel:${h.phone}">
+          <div>📞 በቀጥታ ስልክ ይደውሉ</div>
+          <span class="sub">${h.phone}</span>
+        </a>
+        ${extraHtml}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ai-title">🤖 USMI AI መረጃ እና ጥያቄ መልስ</div>
+      <div class="ai-sub">ስለ ስልጠና ፕሮግራሞች፣ የጊዜ ሰሌዳ ወይም ምዝገባ በቀጥታ ይጠይቁ</div>
+      <div class="chat-log" id="usmiChatLog">
+        <div class="bubble ai">ሰላም! ወደ <b>USMI FASHION SCHOOL</b> እንኳን በደህና መጡ። ስለ ስልጠናዎቻችን፣ ስለ ቀን/ማታ/ቅዳሜና እሁድ ፕሮግራሞች ወይም ስለ ምዝገባ ማንኛውንም ጥያቄ መጠየቅ ይችላሉ!</div>
+      </div>
+      <form class="chat-form" onsubmit="askUsmiAi(event)">
+        <input type="text" id="usmiInput" placeholder="ጥያቄዎን እዚህ ይጻፉ..." required />
+        <button type="submit" id="usmiSend">ጠይቅ</button>
+      </form>
+    </div>
+
+    <div class="card qr-mini">
+      <img src="/api/qr.png?url=https%3A%2F%2Fseya-design-mmgv.onrender.com%2Fu%2Fusmi" alt="USMI QR" />
+      <p>ይህንን QR ስካን በማድረግ <b>/u/usmi</b> ገጽን በቀላሉ ያጋሩ ወይም ይክፈቱ</p>
+    </div>
+  </div>
+
+  <script>
+    async function askUsmiAi(e) {
+      e.preventDefault();
+      const inp = document.getElementById('usmiInput');
+      const btn = document.getElementById('usmiSend');
+      const log = document.getElementById('usmiChatLog');
+      const q = inp.value.trim();
+      if (!q) return;
+
+      const me = document.createElement('div');
+      me.className = 'bubble me';
+      me.textContent = q;
+      log.appendChild(me);
+      inp.value = '';
+      btn.disabled = true;
+
+      const wait = document.createElement('div');
+      wait.className = 'bubble ai';
+      wait.textContent = '⏳ ምላሽ በማዘጋጀት ላይ...';
+      log.appendChild(wait);
+      log.scrollTop = log.scrollHeight;
+
+      try {
+        const r = await fetch('/api/usmi-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: q })
+        });
+        const d = await r.json();
+        wait.textContent = d.reply || d.error || 'ምላሽ ማግኘት አልተቻለም።';
+      } catch (err) {
+        wait.textContent = 'የኢንተርኔት ግንኙነት ችግር አጋጥሟል።';
+      } finally {
+        btn.disabled = false;
+        log.scrollTop = log.scrollHeight;
+      }
+    }
+  </script>
+</body>
+</html>`);
+});
+
 app.get('/api/info', (req, res) => res.json({ name: NAME, tagline: TAGLINE }));
 
 app.post('/api/chat', async (req, res) => {
