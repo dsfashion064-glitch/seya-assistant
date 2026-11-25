@@ -482,16 +482,19 @@ function loadUsmiHub() {
 
 
 
-app.post('/api/usmi-chat', async (req, res) => {
+
+app.post('/api/usmi-chat', express.json({ limit: '15mb' }), async (req, res) => {
   try {
-    const q = String(req.body.prompt || '').trim().slice(0, 1500);
-    const image = req.body.image || null;
-    const audio = req.body.audio || null;
+    const body = req.body || {};
+    const q = String(body.prompt || '').trim().slice(0, 1500);
+    const image = body.image || null;
+    const audio = body.audio || null;
+
     if (!q && !image && !audio) {
       return res.json({ reply: 'እባክዎ ጥያቄዎን ይጻፉ፣ ፎቶ ይላኩ ወይም በድምጽ ይጠይቁ።' });
     }
 
-    const backData = [
+    const backKnowledge = [
       'ስም: USMI FASHION SCHOOL (ውዝሚ ፋሽን ስኩል)',
       'መስራች: Designer Usmi',
       'የልምድ ጊዜ: በፋሽን ዘርፍ 6 ዓመት ገደማ',
@@ -502,14 +505,14 @@ app.post('/api/usmi-chat', async (req, res) => {
       'Instagram: @usmi_fashion_school (https://www.instagram.com/usmi_fashion_school/)',
       'TikTok: @usmi_fashion_school (https://www.tiktok.com/@usmi_fashion_school) እና @usmi.design.new.fashoin (https://www.tiktok.com/@usmi.design.new.fashoin)',
       'ስልጠና ፕሮግራሞች: በተግባር የተደገፈ ስልጠና | የቀን፣ የማታ እና የቅዳሜና እሁድ ፕሮግራሞች አሉን!',
-      'የሚሰጡ ዋና ኮርሶች: የልብስ ቆረጣና ዘመናዊ ስፌት (Pattern Making & Garment Construction)፣ የሴቶችና የወንዶች ፋሽን ዲዛይን፣ የባህላዊ/የድግስ/የአባያ/የሺፎን አልባሳት ስራ፣ የልኬት አወሳሰድና የጨርቅ ምርጫ፣ የአጨራረስ (Finishing) ጥበብ፣ እንዲሁም የተግባር ስልጠናና የቢዝነስ አጀማመር መመሪያ።'
+      'የሚሰጡ ዋና ኮርሶች: የልብስ ቆረጣና ዘመናዊ ስፌት (Pattern Making & Garment Construction)፣ የሴቶችና የወንዶች ፋሽን ዲዛይን፣ የባህላዊ፣ የድግስ፣ የአባያ እና የሺፎን አልባሳት ስራ፣ የልኬት አወሳሰድና የጨርቅ ምርጫ፣ የአጨራረስ (Finishing) ጥበብ፣ እንዲሁም የተግባር ስልጠናና የቢዝነስ አጀማመር መመሪያ።'
     ].join('\n');
 
-    const sysPrompt = `አንተ የ USMI FASHION SCHOOL (DESIGN · CREATE · STITCH · INSPIRE) AI አማካሪ ነህ።
-ከዚህ በታች ያለውን የጀርባ ዳታ መሰረት አድርገህ እና አናላይዝ በማድረግ፣ የራስህን ተጨማሪ ሀሳብ እየጨመርክ በትምህርት ቤቱ (ውዝሚ ፋሽን) እና በፋሽን ዙሪያ ጠቃሚ ሊሆን የሚችል ማንኛውንም መረጃ በአማርኛ በሰፊውና በግልጽ መልስ ስጥ። በቀጥታ የዳታ ዝርዝር ብቻ ከመድገም ይልቅ ተፈጥሯዊ፣ አማካሪ እና አበረታች መልስ ስጥ፤ አስፈላጊ ሆኖ ሲገኝ የምዝገባና የመገናኛ መንገዶችን (@Usmifashion1 ወይም +251901611067) በተፈጥሮ አካትት።
+    const sysPrompt = `አንተ የ USMI FASHION SCHOOL (DESIGN · CREATE · STITCH · INSPIRE) ኦፊሴላዊ AI አማካሪ ነህ።
+ከዚህ በታች ያለውን የጀርባ ዳታ መሰረት አድርገህ እና አናላይዝ በማድረግ፣ የራስህን ተጨማሪ ሀሳብ እየጨመርክ በትምህርት ቤቱ (ውዝሚ ፋሽን) እና በፋሽን ዙሪያ ጠቃሚ ሊሆን የሚችል ማንኛውንም መረጃ በአማርኛ በሰፊውና በግልጽ መልስ ስጥ። የዳታ ዝርዝርን ብቻ ከመድገም ይልቅ ተፈጥሯዊ፣ አማካሪ እና አበረታች ምላሽ ስጥ፤ አስፈላጊ ሆኖ ሲገኝ የመገናኛና የምዝገባ መንገዶችን (@Usmifashion1 ወይም +251901611067) በተፈጥሮ አካትት።
 
 የጀርባ ዳታ፡-
-${backData}`;
+${backKnowledge}`;
 
     const userParts = [];
     if (q) userParts.push({ text: q });
@@ -526,15 +529,14 @@ ${backData}`;
     if (typeof callAI === 'function') {
       try {
         rawReply = await callAI([{ role: 'user', parts: userParts }], sysPrompt);
-      } catch (err) {
+      } catch (e1) {
         rawReply = '';
       }
     }
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
     if (!rawReply && apiKey) {
-      const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-      for (const m of models) {
+      for (const m of ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']) {
         try {
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
           const gr = await fetch(url, {
@@ -547,9 +549,9 @@ ${backData}`;
           });
           if (gr.ok) {
             const gj = await gr.json();
-            const txtOut = gj?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            if (txtOut.trim()) {
-              rawReply = txtOut.trim();
+            const outText = gj?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (outText.trim()) {
+              rawReply = outText.trim();
               break;
             }
           }
@@ -573,12 +575,16 @@ ${backData}`;
       }).catch(() => {});
     }
 
-    res.json({ reply });
-  } catch (e) {
-    res.json({
+    return res.json({ reply });
+  } catch (err) {
+    return res.json({
       reply: 'USMI FASHION SCHOOL (ጅማ መርካቶ፣ መቱማ ህንፃ) የቀን፣ የማታ እና የቅዳሜና እሁድ የተግባር ፋሽን ስልጠናዎችን ይሰጣል። ለዝርዝር መረጃ በ @Usmifashion1 ወይም በ +251901611067 ያግኙን።'
     });
   }
+});
+
+app.get('/u/usmi-hub', (req, res) => {
+  res.redirect(302, '/u/usmi');
 });
 
 app.get('/u/usmi', (req, res) => {
