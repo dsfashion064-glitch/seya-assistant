@@ -490,50 +490,49 @@ app.get('/u/usmi-hub', (req, res) => {
 
 
 
+
 app.post('/api/usmi-chat', express.json({ limit: '2mb' }), async (req, res) => {
   try {
     const q = String((req.body && req.body.prompt) || '').trim().slice(0, 1500);
     if (!q) {
-      return res.json({ reply: 'ሰላም! 😊 ስለ Usmi Fashion School ወይም ስለ ፋሽን ዲዛይን በቀጥታ ይጠይቁኝ።' });
+      return res.json({ reply: 'ሰላም! 😊 ስለ Usmi Fashion School የፈለጉትን አጭር ጥያቄ ይጠይቁኝ።' });
     }
 
     const h = (typeof loadUsmiHub === 'function') ? loadUsmiHub() : {};
-    const schoolName = 'Usmi Fashion School';
     const founder = h.founder || 'Designer Usmi';
     const experience = h.experience || 'በፋሽን ዘርፍ 6 ዓመት ገደማ';
     const tagline = h.tagline || 'DESIGN · CREATE · STITCH · INSPIRE';
-    const address = h.address || 'ጅማ መርካቶ፣ መቱማ ህንፃ';
+    const address = 'ጅማ መርካቶ፣ መቱማ ህንፃ፣ 4ኛ ፎቅ';
     const phone = h.phone || '+251901611067';
     const telegram = h.telegram || '@Usmifashion1';
     const instagram = h.instagram || '@usmi_fashion_school';
     const tiktok1 = h.tiktok1 || '@usmi_fashion_school';
     const tiktok2 = h.tiktok2 || '@usmi.design.new.fashoin';
 
-    const bgData = [
+    const bgKnowledge = [
       'ስም: Usmi Fashion School',
-      'መስራች: ' + founder,
-      'የልምድ ጊዜ: ' + experience,
       'መፈክር: ' + tagline,
-      'አድራሻ: ' + address,
-      'ስልክ: ' + phone,
-      'Telegram: ' + telegram,
-      'Instagram: ' + instagram,
-      'TikTok: ' + tiktok1 + ' እና ' + tiktok2,
-      'ስልጠና ጊዜ: የቀን፣ የማታ እና የቅዳሜና እሁድ የተግባር ስልጠና ፕሮግራሞች አሉን።',
-      'ዋና ኮርሶች: የልብስ ቆረጣና ዘመናዊ ስፌት፣ የሴቶችና የወንዶች ፋሽን ዲዛይን፣ የባህላዊ/የድግስ/የአባያ/የሺፎን አልባሳት ስራ፣ የልኬት አወሳሰድና የጨርቅ ምርጫ፣ የአጨራረስ ጥበብ፣ የተግባር ስልጠናና የቢዝነስ አጀማመር።'
+      'መስራች እና ልምድ: ' + founder + ' (' + experience + ')',
+      'አድራሻ: ' + address + ' (በመቱማ ህንፃ 4ኛ ፎቅ ላይ ይገኛል)',
+      'ስልክ: ' + phone + ' | Telegram: ' + telegram + ' | Instagram: ' + instagram + ' | TikTok: ' + tiktok1 + ', ' + tiktok2,
+      'መደበኛ የክፍያ መጠኖች (Clear): የ1 ወር 14,000 ብር | የ2 ወር 12,000 ብር | የ3 ወር 18,000 ብር | የ6 ወር 30,000 ብር',
+      'ተጨማሪ አገልግሎት እና ስልጠና: ለአንድ ወር ሲሆን ሳምንቱን ሙሉ ከሚሰጠው ትምህርት በተጨማሪ ቅዳሜና እሁድ (ዊኬንድ) ስልጠና ይሰጣል፤ ተማሪዎችን ለመምረጥም ያግዛል',
+      'ተጨማሪ ጥቅሞችና ድጋፍ: ተማሪዎች ሲመጡ ልብስ ማሰራትን ጨምሮ የሐሳብ ድጋፍ እና ምክሮች (tips) ይሰጣሉ',
+      'የፓኬጅ አማራጮች: የ6 ወር (20ኛ ፓኬጅ)፣ የ3 ወር (16ኛ ፓኬጅ)፣ የ2 ወር (12ኛ ፓኬጅ) እና የ1 ወር (9ኛ ፓኬጅ) አሉ፤ መርጠው መማር ለሚፈልጉ በልዩ ሁኔታ ትምህርት ይሰጣል'
     ].join('\n');
 
-    const sysPrompt = `አንተ የ Usmi Fashion School (${tagline}) ወዳጃዊ፣ ቀለል ያለ እና አጠር አጠር እያልክ የምታወራ AI አማካሪ ነህ።
-ከዚህ በታች ያለውን የጀርባ ዳታ መሰረት አድርገህ የራስህን ተጨማሪ ጠቃሚ ምክርና ማብራሪያ ጨምር፤ ግን ረጅም ድርቅ ያለ ጽሑፍ አታብዛ — ልክ እንደ ሰው ልጅ ቀለል አድርገህ እና አጠር አጠር እያደረግክ መልስ ስጥ።
+    const sysPrompt = `አንተ የ Usmi Fashion School (${tagline}) ቀልጣፋ፣ ወዳጃዊ እና አማካሪ AI ነህ።
+ከዚህ በታች ያለውን የጀርባ ዳታ በውስጥህ ይዘህ፣ የተጠየቀውን ጥያቄ ብቻ በቀጥታ፣ አጠር አጠር እያደረግክ እና እንደ ሰው ልጅ በቀላል ቋንቋ መልስ ስጥ።
 
-ህጎች፡-
-1) የትምህርት ቤቱን ስም ሁልጊዜ በትክክል "Usmi Fashion School" ብለህ ጻፍ ("Usmi Fashion School" ወይም "Usmi Fashion School" በፍጹም አትጠቀም)።
-2) ልክ እንደ ሰው ልጅ በተፈጥሮ እና ቀለል ባለ አነጋገር አውራ፤ በመጠኑ ደስ የሚሉና ሰዎች የሚያውቋቸውን ኢሞጂዎች (ለምሳሌ 😊፣ ✨፣ ✂️፣ 👗) በልክ ተጠቀም (በአንድ መልስ ብዙ ኢሞጂ አታከማች)።
-3) ተጠቃሚው በአማርኛ ቢጠይቅ በአማርኛ መልስ ስጥ፤ በአፋን ኦሮሞ (Afaan Oromo) ቢጠይቅ ወይም ቢያወራ ደግሞ በአፋን ኦሮሞ (ወይም አስፈላጊ ሆኖ ሲገኝ ቀለል ባለ ሁለት ቋንቋ) በትክክል እና በተፈጥሮ መልስ ስጥ።
-4) የፋሽን ዲዛይን መማር ለራስ ችሎታ፣ ለገቢ እና ለራስ ስራ ምን ያህል ጥሩ እንደሚሆን በቀላሉ ምከርና አበረታታ፤ ለምዝገባ ወይም ለተጨማሪ መረጃ ${telegram} ወይም ${phone} (${address}) በተፈጥሮ ጠቁም።
+ጥብቅ መመሪያዎች፦
+1) የትምህርት ቤቱን ስም ሁልጊዜ በትክክል "Usmi Fashion School" ብቻ ብለህ ጻፍ (ምንም የተሳሳተ ስም ወይም ፊደል አትጠቀም)።
+2) ሁሉንም ዝርዝር በአንድ ጊዜ አታከማች፤ ሰውየው የጠየቀውን ነጥብ ብቻ አጠር አጠር አድርገህ መልስ።
+3) ተጠቃሚው በአፋን ኦሮሞ (Afaan Oromo) ቢጠይቅ ስለ Usmi Fashion School፣ ክፍያ፣ ፓኬጅ፣ አድራሻ (4ኛ ፎቅ) እና ስልጠና በአፋን ኦሮሞ በግልጽና በተፈጥሮ መልስ ስጥ፤ በአማርኛ ቢጠይቅ በአማርኛ መልስ ስጥ።
+4) ለተማሪው የተሻለውን ፓኬጅ ወይም ስልጠና እንዲመርጥ በቀላሉ አማክርና ድጋፍ ስጥ፤ አድራሻ ሲጠየቅ ጅማ መርካቶ፣ መቱማ ህንፃ፣ 4ኛ ፎቅ ላይ እንደሚገኝ ግለጽ።
+5) ልክ እንደ ሰው ልጅ ቀለል ባለ አነጋገር አውራ እና ደስ የሚሉ ኢሞጂዎችን (ለምሳሌ 😊፣ ✨፣ ✂️) በልክ (1 ወይም 2 ብቻ) ተጠቀም።
 
-የጀርባ ዳታ፡-
-${bgData}`;
+የጀርባ ዳታ፦
+${bgKnowledge}`;
 
     const userParts = [{ text: q }];
     let rawReply = '';
@@ -572,11 +571,11 @@ ${bgData}`;
     }
 
     let reply = (typeof tidy === 'function') ? tidy(rawReply) : String(rawReply || '').trim();
-    reply = reply.replace(/Usmi Fashion Schools*ፋሽንs*ትምህርትs*ቤት|Usmi Fashion Schools*ፋሽን|Usmi Fashion School/g, 'Usmi Fashion School');
+    reply = reply.replace(/Usmi Fashion Schools*ፋሽንs*ትምህርትs*ቤት|Usmi Fashion Schools*ፋሽን|Usmi Fashion School|Usmi Fashion Schools*ፋሽን|Usmi Fashion School/g, 'Usmi Fashion School');
 
     if (!reply) {
       return res.json({
-        reply: 'ሰላም! 😊 Usmi Fashion School በ ' + address + ' የሚገኝ የፋሽን ዲዛይንና ስፌት ማዕከል ነው። የቀን፣ የማታ እና የቅዳሜና እሁድ ስልጠናዎች አሉን። ለመረጃ በ ' + telegram + ' ወይም በ ' + phone + ' ያናግሩን! ✨'
+        reply: 'ሰላም! 😊 Usmi Fashion School በጅማ መርካቶ፣ መቱማ ህንፃ 4ኛ ፎቅ ይገኛል። ለመረጃ በ ' + telegram + ' ወይም በ ' + phone + ' ያናግሩን! ✨'
       });
     }
 
@@ -591,7 +590,7 @@ ${bgData}`;
     return res.json({ reply });
   } catch (err) {
     return res.json({
-      reply: 'ሰላም! 😊 Usmi Fashion School በጅማ መርካቶ፣ መቱማ ህንፃ ይገኛል። ለምዝገባ በ @Usmifashion1 ወይም በ +251901611067 ያናግሩን! ✨'
+      reply: 'ሰላም! 😊 Usmi Fashion School በጅማ መርካቶ፣ መቱማ ህንፃ 4ኛ ፎቅ ይገኛል። ለመረጃ በ @Usmifashion1 ወይም በ +251901611067 ያናግሩን! ✨'
     });
   }
 });
