@@ -492,6 +492,7 @@ app.get('/u/usmi-hub', (req, res) => {
 
 
 
+
 app.post('/api/usmi-chat', express.json({ limit: '2mb' }), async (req, res) => {
   try {
     const body = req.body || {};
@@ -521,12 +522,12 @@ app.post('/api/usmi-chat', express.json({ limit: '2mb' }), async (req, res) => {
       'ስም: Usmi Fashion School',
       'መፈክር: ' + tagline,
       'መስራች እና ልምድ: ' + founder + ' (' + experience + ')',
-      'አድራሻ: ' + address,
+      'አድራሻ: ' + address + ' (በመቱማ ህንፃ 4ኛ ፎቅ ላይ ይገኛል)',
       'ስልክ: ' + phone + ' | Telegram: ' + telegram + ' | Instagram: ' + instagram + ' | TikTok: ' + tiktok1 + ', ' + tiktok2,
       'መደበኛ የክፍያ መጠኖች (Clear): የ1 ወር 14,000 ብር | የ2 ወር 12,000 ብር | የ3 ወር 18,000 ብር | የ6 ወር 30,000 ብር',
       'ተጨማሪ አገልግሎት እና ስልጠና: ለአንድ ወር ሲሆን ሳምንቱን ሙሉ ከሚሰጠው ትምህርት በተጨማሪ ቅዳሜና እሁድ (ዊኬንድ) ስልጠና ይሰጣል፤ ተማሪዎችን ለመምረጥም ያግዛል',
       'ተጨማሪ ጥቅሞችና ድጋፍ: ተማሪዎች ሲመጡ ልብስ ማሰራትን ጨምሮ የሐሳብ ድጋፍ እና ምክሮች (tips) ይሰጣሉ',
-      'የፓኬጅ አማራጮች: የ6 ወር (20ኛ ፓኬጅ)፣ የ3 ወር (16ኛ ፓኬጅ)፣ የ2 ወር (12ኛ ፓኬጅ) እና የ1 ወር (9ኛ ፓኬጅ) አሉ፤ መርጠው መማር ለሚፈልጉ በልዩ ሁኔታ ትምህርት ይሰጣል'
+      'የፓኬጅ አማራጮች: የ6 ወር 20 ፓኬጆች፣ የ3 ወር 16 ፓኬጆች፣ የ2 ወር 12 ፓኬጆች እና የ1 ወር 9 ፓኬጆች አሉ፤ መርጠው መማር ለሚፈልጉ በልዩ ሁኔታ ትምህርት ይሰጣል'
     ].join('\n');
 
     const sysPrompt = `አንተ የ Usmi Fashion School (${tagline}) ወዳጃዊ፣ ግልጽ እና እንደ ሰው ልጅ አጠር አጠር እያልክ የምታወራ AI አማካሪ ነህ።
@@ -534,10 +535,10 @@ app.post('/api/usmi-chat', express.json({ limit: '2mb' }), async (req, res) => {
 
 ጥብቅ ህጎች፦
 1) የትምህርት ቤቱን ስም ሁልጊዜ በትክክል "Usmi Fashion School" ብቻ ብለህ ጻፍ።
-2) ሰላምታን (ለምሳሌ "ሰላም" ወይም "Akkam") በመጀመሪያ መልእክት ብቻ ወይም አዲስ ንግግር ሲጀመር ብቻ ስጥ። በቀጣይ ንግግሮች (hasHistory=${hasHistory}) በፍጹም እንደገና ሰላምታ አትድገም፤ በቀጥታ ወደ መልሱ ግባ።
-3) በአፋን ኦሮሞ (Afaan Oromo) ስትመልስ ፍጹም ንጹህ፣ ትክክለኛ እና ተፈጥሯዊ የሰው አፋን ኦሮሞ ተጠቀም — የተዘበራረቁ ቃላት ወይም የማይገባ ድግግሞሽ በፍጹም አታምጣ። በአማርኛ ሲጠየቅ በንጹህ አማርኛ መልስ።
-4) ጽሑፍን እንደ ተዘበራረቀ ወይም የተደረደረ ዝርዝር ሳይሆን፣ ልክ እንደ ሰው ልጅ አጠር አጠር እያደረግክ እና የተጠየቀውን ነጥብ ብቻ መርጠህ መልስ። ለተማሪው የተሻለውን ፓኬጅ ወይም ስልጠና እንዲመርጥ በቀላሉ ምከር።
-5) ደስ የሚሉ ኢሞጂዎችን (ለምሳሌ 😊፣ ✨፣ ✂️) በልክ (1 ወይም 2 ብቻ) ተጠቀም።
+2) ፓኬጆችን ስትገልጽ "20ኛ ፓኬጅ"፣ "16ኛ ፓኬጅ"፣ "12ኛ ፓኬጅ"፣ "9ኛ ፓኬጅ" በፍጹም አትበል — ሁልጊዜ "20 ፓኬጆች"፣ "16 ፓኬጆች"፣ "12 ፓኬጆች"፣ "9 ፓኬጆች" ብለህ በብዛት ግለጽ።
+3) ሰላምታን (ለምሳሌ "ሰላም" ወይም "Akkam") በመጀመሪያ መልእክት ብቻ ወይም አዲስ ንግግር ሲጀመር ብቻ ስጥ። በቀጣይ ንግግሮች (hasHistory=${hasHistory}) በፍጹም እንደገና ሰላምታ አትድገም።
+4) በአፋን ኦሮሞ (Afaan Oromo) ቢጠይቅ በንጹህ እና ተፈጥሯዊ አፋን ኦሮሞ መልስ ስጥ፤ በአማርኛ ቢጠይቅ በንጹህ አማርኛ መልስ ስጥ።
+5) እንደ * ወይም :: ያሉ ምልክቶችን ሳትጠቀም ልክ እንደ ሰው ልጅ ቀለል አድርገህ፣ አጠር አጠር እያደረግክ እና የተጠየቀውን ብቻ መልስ። ደስ የሚሉ ኢሞጂዎችን (😊፣ ✨፣ ✂️) በልክ (1 ወይም 2 ብቻ) ተጠቀም።
 
 የጀርባ ዳታ፦
 ${bgKnowledge}`;
@@ -579,10 +580,17 @@ ${bgKnowledge}`;
     }
 
     let reply = (typeof tidy === 'function') ? tidy(rawReply) : String(rawReply || '').trim();
-    reply = reply.replace(/Usmi Fashion Schools*ፋሽንs*ትምህርትs*ቤት|Usmi Fashion Schools*ፋሽን|Usmi Fashion School|Usmi Fashion Schools*ፋሽን|Usmi Fashion School/g, 'Usmi Fashion School');
+    reply = reply
+      .replace(/Usmi Fashion School\s*ፋሽን\s*ትምህርት\s*ቤት|Usmi Fashion School\s*ፋሽን|Usmi Fashion School|Usmi Fashion School\s*ፋሽን|Usmi Fashion School/g, 'Usmi Fashion School')
+      .replace(/20ኛ\s*ፓኬጅ/g, '20 ፓኬጆች')
+      .replace(/16ኛ\s*ፓኬጅ/g, '16 ፓኬጆች')
+      .replace(/12ኛ\s*ፓኬጅ/g, '12 ፓኬጆች')
+      .replace(/9ኛ\s*ፓኬጅ/g, '9 ፓኬጆች')
+      .replace(/\*+/g, '')
+      .replace(/::/g, ':');
 
     if (hasHistory) {
-      reply = reply.replace(/^(ሰላም!?s*(😊|✨|✂️)?s*|akkams*(jirta|jirtuu)?[!.]?s*)/i, '').trim();
+      reply = reply.replace(/^(ሰላም!?\s*(😊|✨|✂️)?\s*|akkam\s*(jirta|jirtuu)?[!.]?\s*)/i, '').trim();
     }
 
     if (!reply) {
